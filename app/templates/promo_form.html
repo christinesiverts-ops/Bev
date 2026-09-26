@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block title %}Edit promo{% endblock %}{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<h1>Edit promo window</h1>
+<p><a href="/plan/{{ pr.program_id }}">← {{ pr.program.code }}</a></p>
+<form method="post" class="card formgrid">{{ csrf_field() }}
+  {% include "_promo_fields.html" %}
+  <button class="btn primary">Save</button>
+</form>
+{% endblock %}

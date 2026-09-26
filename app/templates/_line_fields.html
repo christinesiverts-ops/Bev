@@ -1,0 +1,14 @@
+<label>SKU / pack checked
+  <select name="sku" data-sku>{% for k in skus %}<option {% if line and line.sku == k %}selected{% endif %}>{{ k }}</option>{% endfor %}</select></label>
+<label>Shelf price you see ($)
+  <input name="observed_price" inputmode="decimal" placeholder="e.g. 5.99" value="{{ line.observed_price if line and line.observed_price is not none else '' }}" data-observed></label>
+<p class="expected span2" data-expected-out>{% if line %}Plan price: {{ line.expected_price|money or 'Not set' }} ({{ line.expected_basis }}){% endif %}</p>
+<label>Shelf tag correct? {{ yn_select('tag_ok', line.tag_ok if line else None) }}</label>
+<label>On planogram / right location? {{ yn_select('planogram_ok', line.planogram_ok if line else None) }}</label>
+<label>All authorized SKUs in stock? {{ yn_select('in_stock_ok', line.in_stock_ok if line else None) }}</label>
+<label>Display per callout?
+  <select name="display"><option value="">—</option>{% for d_ in display_choices %}<option {% if line and line.display == d_ %}selected{% endif %}>{{ d_ }}</option>{% endfor %}</select></label>
+<label class="span2">Discrepancy
+  <select name="discrepancy_type" data-dtype>{% for d_ in dtypes %}<option {% if line and line.discrepancy_type == d_ %}selected{% endif %}>{{ d_ }}</option>{% endfor %}</select></label>
+<label class="span2">Notes <textarea name="notes" rows="3" placeholder="What you saw, who you spoke to, what was fixed">{{ line.notes if line else '' }}</textarea></label>
+<label class="span2">Photos <input type="file" name="photos" accept="image/*" multiple></label>

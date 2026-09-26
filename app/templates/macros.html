@@ -1,0 +1,45 @@
+{% macro csrf_field() %}<input type="hidden" name="csrf_token" value="{{ csrf }}">{% endmacro %}
+
+{% macro badge(text) -%}
+{%- set cls = {'Match':'good','Resolved':'good','Active':'good','Current (2026)':'good','Done':'good',
+               'Over plan':'bad','Open':'bad','Expired':'muted','No plan price':'warn',
+               'Under plan':'warn','In Progress':'warn','Upcoming':'info','Confirm for 2026':'warn'}.get(text, 'muted') -%}
+<span class="badge {{ cls }}">{{ text }}</span>
+{%- endmacro %}
+
+{% macro plan_card(c, show_link=True) %}
+<article class="plan-card brand-{{ c.p.brand|lower|replace("'", '')|replace(' ', '-') }}">
+  <header>
+    <span class="brand-chip">{{ c.p.brand }}</span>
+    <strong>{{ c.p.account }}</strong>
+    {% if c.p.data_status != 'Current (2026)' %}{{ badge(c.p.data_status) }}{% endif %}
+  </header>
+  <div class="price-row">
+    <div><span class="label">Expected shelf price</span>
+      {% if c.expected.price is none and c.sku_prices %}
+        {% for sku, price, offer in c.sku_prices %}<span><strong>{{ price|money }}</strong> <span class="small">{{ sku }}</span></span>{% endfor %}
+        <span class="hint">Promo price by SKU; other SKUs not set</span>
+      {% else %}
+      <span class="price">{% if c.expected.price is not none %}{{ c.expected.price|money }}{% else %}Not set{% endif %}</span>
+      {% if c.expected.price is not none %}<span class="hint">{{ c.expected.basis }}</span>{% endif %}
+      {% endif %}</div>
+    <div><span class="label">Current promo</span><span>{{ c.offer }}</span>
+      {% if c.next %}<span class="hint">Next starts {{ c.next|d }}</span>{% endif %}</div>
+  </div>
+  <dl class="kv">
+    {% if c.p.shelf_callout %}<dt>Shelf / display</dt><dd>{{ c.p.shelf_callout }}</dd>{% endif %}
+    {% if c.p.skus %}<dt>Authorized SKUs</dt><dd>{{ c.p.skus }}</dd>{% endif %}
+    {% if c.p.case_rec %}<dt>Backstock</dt><dd>{{ c.p.case_rec }}</dd>{% endif %}
+    {% if c.p.priority %}<dt>Priority</dt><dd>{{ c.p.priority }}</dd>{% endif %}
+  </dl>
+  {% if show_link %}<a class="small" href="/plan/{{ c.p.id }}">Full plan &amp; promo windows →</a>{% endif %}
+</article>
+{% endmacro %}
+
+{% macro yn_select(name, value) %}
+<select name="{{ name }}">
+  <option value="" {% if value is none %}selected{% endif %}>—</option>
+  <option value="Y" {% if value == True %}selected{% endif %}>Yes</option>
+  <option value="N" {% if value == False %}selected{% endif %}>No</option>
+</select>
+{% endmacro %}

@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    image: chain-audit:latest
+    container_name: chain-audit
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - audit-data:/data
+    # Only reachable from this server. nginx proxies https://your-domain -> http://127.0.0.1:8000
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+
+volumes:
+  audit-data:

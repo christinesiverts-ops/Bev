@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% block title %}Data review{% endblock %}
+{% block content %}
+<h1>Data review</h1>
+<p class="muted">Questions found while merging the Non-Alc Chain doc (9/8/26) with the HW Soda hot sheet (8/25/25). Resolve them, update the plan, then set the program's Data Status to "Current (2026)".</p>
+{% for it in items %}
+<article class="card {{ 'dim' if it.resolved }}">
+  <header class="titlebar"><strong>{{ it.account }} <span class="muted">· {{ it.brand }}</span></strong>
+    {% if it.resolved %}{{ badge('Resolved') }}{% else %}{{ badge('Open') }}{% endif %}</header>
+  <p>{{ it.issue }}</p>
+  <p class="small"><strong>Action:</strong> {{ it.action }}</p>
+  {% if user.is_manager %}
+  <form method="post" action="/data-review/{{ it.id }}" class="inline">{{ csrf_field() }}
+    <input name="owner" value="{{ it.owner }}" placeholder="Owner">
+    <select name="resolved"><option value="N">Open</option><option value="Y" {% if it.resolved %}selected{% endif %}>Resolved</option></select>
+    <button class="btn small-btn">Save</button></form>
+  {% elif it.owner %}<p class="small muted">Owner: {{ it.owner }}</p>{% endif %}
+</article>
+{% endfor %}
+{% if user.is_manager %}
+<details class="addbox"><summary class="btn">+ Add item</summary>
+<form method="post" action="/data-review" class="card formgrid">{{ csrf_field() }}
+  <label>Account <input name="account"></label><label>Brand <input name="brand"></label>
+  <label class="span2">Issue <textarea name="issue" rows="2" required></textarea></label>
+  <label class="span2">Action needed <textarea name="action" rows="2"></textarea></label>
+  <label>Owner <input name="owner"></label>
+  <button class="btn primary">Add</button>
+</form></details>
+{% endif %}
+{% endblock %}

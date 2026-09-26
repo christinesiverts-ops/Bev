@@ -1,0 +1,52 @@
+{% extends "base.html" %}{% block title %}Dashboard{% endblock %}
+{% macro pct(v) %}{% if v is none %}<span class="muted">—</span>{% else %}{{ (v*100)|round(0)|int }}%{% endif %}{% endmacro %}
+{% block content %}
+<div class="titlebar"><h1>Dashboard</h1>
+  <form method="get" class="inline"><select name="days" data-autosubmit>{% for d_ in [7,30,90] %}<option value="{{ d_ }}" {% if days == d_ %}selected{% endif %}>Last {{ d_ }} days</option>{% endfor %}</select></form></div>
+<div class="kpis">
+  <a class="kpi" href="/visits"><span class="n">{{ k.visits }}</span><span>Visits ({{ days }}d)</span></a>
+  <div class="kpi"><span class="n">{{ k.checks }}</span><span>Program checks ({{ days }}d)</span></div>
+  <div class="kpi"><span class="n">{{ pct(k.match_rate) }}</span><span>Shelf price match ({{ k.n_checks }} priced)</span></div>
+  <a class="kpi {{ 'bad' if k.open }}" href="/issues"><span class="n">{{ k.open }}</span><span>Open follow-ups</span></a>
+  <a class="kpi {{ 'bad' if k.overdue }}" href="/issues?overdue=1"><span class="n">{{ k.overdue }}</span><span>Overdue</span></a>
+  <a class="kpi" href="/calendar"><span class="n">{{ k.active_promos }}</span><span>Promo windows live · {{ k.starting_soon }} start in 14d</span></a>
+  <a class="kpi {{ 'warn' if k.confirm }}" href="/plan?status=Confirm+for+2026"><span class="n">{{ k.confirm }}</span><span>Programs to confirm for 2026</span></a>
+  <a class="kpi" href="/stores"><span class="n">{{ k.stale }}/{{ k.stores }}</span><span>Stores not visited in {{ days }}d</span></a>
+</div>
+
+<section class="card">
+  <h2>Accountability by rep</h2>
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Person</th><th class="num">Visits</th><th class="num">Checks</th><th class="num">Price match</th><th class="num">Open follow-ups</th><th class="num">Overdue</th><th class="num">Open tasks</th><th>Last visit</th></tr></thead>
+    <tbody>{% for r in by_rep %}
+    <tr><td><a href="/visits?rep={{ r.u.id }}">{{ r.u.display_name }}</a></td><td class="num">{{ r.visits }}</td><td class="num">{{ r.checks }}</td>
+      <td class="num">{{ pct(r.match) }}</td><td class="num"><a href="/issues?owner={{ r.u.id }}">{{ r.open }}</a></td>
+      <td class="num {{ 'overdue-text' if r.overdue }}">{{ r.overdue }}</td><td class="num">{{ r.tasks }}</td>
+      <td class="{{ 'overdue-text' if not r.last or (t - r.last).days > days }}">{{ r.last|d or 'Never' }}</td></tr>
+    {% endfor %}</tbody></table></div>
+</section>
+
+<div class="grid2">
+<section class="card">
+  <h2>By brand</h2>
+  <table class="data"><thead><tr><th>Brand</th><th class="num">Programs</th><th class="num">Live promos</th><th class="num">To confirm</th><th class="num">Open issues</th><th class="num">Price match</th></tr></thead>
+  <tbody>{% for b in brand_rows %}<tr><td><a href="/plan?brand={{ b.brand|urlencode }}">{{ b.brand }}</a></td><td class="num">{{ b.programs }}</td><td class="num">{{ b.active }}</td>
+    <td class="num">{{ b.confirm }}</td><td class="num">{{ b.open }}</td><td class="num">{{ pct(b.match) }}</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="card">
+  <h2>Open follow-ups by type</h2>
+  {% for dt_, n in by_type %}<a class="bar-row" href="/issues?dtype={{ dt_|urlencode }}"><span>{{ dt_ }}</span><span class="bar"><span class="fill w{{ ((n / by_type[0][1]) * 10)|round(0,'ceil')|int }}"></span></span><span class="num">{{ n }}</span></a>
+  {% else %}<p class="muted">No open follow-ups.</p>{% endfor %}
+  <p class="small muted">Price checks ({{ days }}d): {{ checks['Match'] }} match · {{ checks['Over plan'] }} over · {{ checks['Under plan'] }} under</p>
+</section>
+</div>
+
+<section class="card">
+  <h2>Stores not visited in {{ days }} days</h2>
+  {% if k.unverified %}<p class="small"><span class="badge warn">{{ k.unverified }} unverified</span> stores were added by reps; review them on the Stores page.</p>{% endif %}
+  {% for st, last in stale %}<a class="item link" href="/stores/{{ st.id }}">{{ st.label }} <span class="small muted">{{ ('last ' ~ (last|d)) if last else 'never visited' }}</span></a>
+  {% else %}<p class="muted">{% if k.stores %}Every store has a recent visit.{% else %}No stores loaded yet.{% endif %}</p>{% endfor %}
+  {% if k.stale > stale|length %}<p class="small muted">Showing {{ stale|length }} of {{ k.stale }}.</p>{% endif %}
+</section>
+{% if user.is_manager and k.data_review_open %}<p><a href="/data-review">{{ k.data_review_open }} data-review questions still open →</a></p>{% endif %}
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% block title %}Promo calendar{% endblock %}
+{% block content %}
+<h1>Promo calendar</h1>
+<form class="filters" method="get">
+  <select name="status" data-autosubmit>
+    {% for s_ in ['Active','Upcoming','Expired',''] %}<option value="{{ s_ }}" {% if f.status == s_ %}selected{% endif %}>{{ s_ or 'All windows' }}</option>{% endfor %}</select>
+  <select name="brand" data-autosubmit><option value="">All brands</option>
+    {% for b in brands %}<option {% if f.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}</select>
+  <button class="btn">Filter</button>
+</form>
+<p class="muted small">{{ rows|length }} windows · today is {{ t|d }}</p>
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>Status</th><th>Program</th><th>SKU</th><th>Offer</th><th class="num">Unit retail</th><th class="num">Case cost</th><th>Start</th><th>End</th><th>Display</th></tr></thead>
+  <tbody>
+  {% for pr, st in rows %}
+  <tr><td>{{ badge(st) }}</td><td><a href="/plan/{{ pr.program.id }}">{{ pr.program.code }}</a></td><td>{{ pr.sku }}</td><td>{{ pr.offer }}</td>
+    <td class="num">{{ pr.unit_retail|money }}</td><td class="num">{{ pr.case_cost|money }}</td><td>{{ pr.start|d }}</td><td>{{ pr.end|d }}</td>
+    <td>{{ 'Y' if pr.display_required else '' }}</td></tr>
+  {% else %}<tr><td colspan="9" class="muted">No windows match.</td></tr>{% endfor %}
+  </tbody></table></div>
+{% endblock %}

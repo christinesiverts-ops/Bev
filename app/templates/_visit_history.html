@@ -1,0 +1,16 @@
+{# expects `visits` list #}
+{% for v in visits %}
+<article class="history">
+  <header><a href="/visits/{{ v.id }}"><strong>{{ v.visit_date|d }}</strong></a> · {{ v.rep.display_name }}
+    <span class="small muted">{{ v.lines|length }} checks{% if v.photos %} · {{ v.photos|length }} photos{% endif %}</span></header>
+  {% if v.notes %}<p class="note">{{ v.notes }}</p>{% endif %}
+  {% for l in v.lines %}
+  <div class="small line">
+    <strong>{{ l.program.brand }}</strong> {{ l.program.account }}{% if l.sku != 'All' %} ({{ l.sku }}){% endif %}:
+    {% if l.price_check %}{{ badge(l.price_check) }} {{ l.observed_price|money }}{% if l.expected_price is not none %} vs {{ l.expected_price|money }}{% endif %}{% endif %}
+    {% if l.discrepancy_type != 'None' %}<span class="badge bad">{{ l.discrepancy_type }}</span>{% endif %}
+    {% if l.notes %}<div class="note">{{ l.notes }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</article>
+{% else %}<p class="muted">No visits logged here yet.</p>{% endfor %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}{% from "macros.html" import plan_card, yn_select %}{% block title %}Visit · {{ v.store.label }}{% endblock %}
+{% block content %}
+<div class="titlebar"><div>
+  <h1>{{ v.store.chain }} #{{ v.store.store_number }}</h1>
+  <p class="muted small">{{ v.rep.display_name }} · {{ v.visit_date|d }} · in {{ v.checked_in_at|local }}{% if v.checked_out_at %} · out {{ v.checked_out_at|local }}{% endif %}
+  · {% if v.checkin_lat is none %}<span class="badge warn">No GPS</span>{% elif v.distance_m is none %}<span class="badge muted">GPS captured (store has no coordinates)</span>{% elif v.distance_m > gps_flag %}<span class="badge bad">{{ (v.distance_m/1000)|round(1) }} km from store</span>{% else %}<span class="badge good">At store ({{ v.distance_m|int }} m)</span>{% endif %}</p></div>
+  <a class="btn" href="/stores/{{ v.store.id }}">Store page</a></div>
+
+{% if issues %}
+<section class="card attention">
+  <h2>Open follow-ups here <span class="count">{{ issues|length }}</span></h2>
+  {% for i in issues %}
+  <div class="item">
+    {{ badge(i.status) }} <strong>{{ i.discrepancy_type }}</strong>{% if i.program %} · {{ i.program.brand }}{% endif %}
+    <span class="small muted">· {{ i.owner.display_name if i.owner else '—' }}{% if i.due_date %} · due {{ i.due_date|d }}{% endif %}</span>
+    <div class="small">{{ i.description }}</div>
+    {% if editable %}
+    <form method="post" action="/issues/{{ i.id }}/update" class="inline">{{ csrf_field() }}
+      <input type="hidden" name="back" value="/visits/{{ v.id }}">
+      <select name="status"><option>Open</option><option {% if i.status == 'In Progress' %}selected{% endif %}>In Progress</option><option>Resolved</option></select>
+      <input name="note" placeholder="What changed?" class="grow"><button class="btn small-btn">Update</button></form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if prev %}
+<section class="card">
+  <h2>Last visit notes</h2>
+  {% set visits = prev %}{% include "_visit_history.html" %}
+</section>
+{% endif %}
+
+<details class="card" {% if not v.lines %}open{% endif %}>
+  <summary><h2 class="inline-h">Plan for this store today</h2></summary>
+  <div class="cards">{% for c in cards %}{{ plan_card(c) }}{% else %}<p class="muted">No programs match this store's chain. Ask your manager to check the store's chain name.</p>{% endfor %}</div>
+</details>
+
+{% if editable %}
+<section class="card" id="add">
+  <h2>Log a check</h2>
+  <script type="application/json" id="plan-data">{{ plan_json|tojson }}</script>
+  <form method="post" action="/visits/{{ v.id }}/lines" enctype="multipart/form-data" class="formgrid" data-line-form>{{ csrf_field() }}
+    <label class="span2">Program checked
+      <select name="program_id" required data-program>
+        <option value="">Pick brand / account…</option>
+        {% for p in matched %}<option value="{{ p.id }}">{{ p.brand }} · {{ p.account }}</option>{% endfor %}
+        {% if other %}<optgroup label="Other {{ v.store.chain }} divisions">{% for p in other %}<option value="{{ p.id }}">{{ p.brand }} · {{ p.account }}</option>{% endfor %}</optgroup>{% endif %}
+      </select></label>
+    {% set line = None %}{% include "_line_fields.html" %}
+    <fieldset class="span2 followup" data-followup>
+      <legend>Follow-up (created when there's a discrepancy)</legend>
+      <label>Owner <select name="owner_id">{% for u in team %}<option value="{{ u.id }}" {% if u.id == v.rep_id %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
+      <label>Due <input type="date" name="due_date" value="{{ default_due.isoformat() }}"></label>
+      <label class="span2">Action needed <input name="action" placeholder="e.g. Ask SM to hang 2/$3 tag; resubmit display authorization"></label>
+    </fieldset>
+    <button class="btn primary block span2">Save check</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="card" id="lines">
+  <h2>Checks this visit <span class="count">{{ v.lines|length }}</span></h2>
+  {% for l in v.lines %}
+  <div class="item">
+    <strong>{{ l.program.brand }} · {{ l.program.account }}</strong>{% if l.sku != 'All' %} ({{ l.sku }}){% endif %}
+    <div class="small">
+      {% if l.observed_price is not none %}Shelf {{ l.observed_price|money }} vs plan {{ l.expected_price|money or 'not set' }} {{ badge(l.price_check) }}{% endif %}
+      {% if l.tag_ok == False %}<span class="badge bad">Tag</span>{% endif %}
+      {% if l.planogram_ok == False %}<span class="badge bad">Planogram</span>{% endif %}
+      {% if l.in_stock_ok == False %}<span class="badge bad">Out of stock</span>{% endif %}
+      {% if l.display == 'No' %}<span class="badge bad">No display</span>{% endif %}
+      {% if l.discrepancy_type != 'None' %}<span class="badge bad">{{ l.discrepancy_type }}</span>{% endif %}
+    </div>
+    <div class="small muted">{{ l.expected_basis }}</div>
+    {% if l.notes %}<p class="note">{{ l.notes }}</p>{% endif %}
+    {% if l.photos %}<div class="thumbs">{% for ph in l.photos %}<a href="/photos/{{ ph.id }}" target="_blank" rel="noopener"><img src="/photos/{{ ph.id }}" alt="Shelf photo" loading="lazy"></a>{% endfor %}</div>{% endif %}
+    {% if editable %}<a class="small" href="/lines/{{ l.id }}/edit">Edit</a>
+      <form method="post" action="/lines/{{ l.id }}/delete" class="inline" data-confirm="Remove this check?">{{ csrf_field() }}<button class="linkish danger small">Remove</button></form>{% endif %}
+  </div>
+  {% else %}<p class="muted">No checks logged yet.</p>{% endfor %}
+</section>
+
+<section class="card" id="notes">
+  <h2>General visit notes &amp; photos</h2>
+  {% set gen = v.photos|selectattr('audit_line_id', 'none')|list %}
+  {% if gen %}<div class="thumbs">{% for ph in gen %}<span class="thumb"><a href="/photos/{{ ph.id }}" target="_blank" rel="noopener"><img src="/photos/{{ ph.id }}" alt="Visit photo" loading="lazy"></a>
+    {% if editable %}<form method="post" action="/photos/{{ ph.id }}/delete" data-confirm="Delete photo?">{{ csrf_field() }}<button class="linkish danger small">Delete</button></form>{% endif %}</span>{% endfor %}</div>{% endif %}
+  {% if editable %}
+  <form method="post" action="/visits/{{ v.id }}/notes" enctype="multipart/form-data">{{ csrf_field() }}
+    <textarea name="notes" rows="4" placeholder="Store manager conversations, backroom, competitor activity, anything for next time">{{ v.notes }}</textarea>
+    <input type="file" name="photos" accept="image/*" multiple>
+    <button class="btn">Save notes</button>
+  </form>
+  {% else %}<p class="note">{{ v.notes or 'No general notes.' }}</p>{% endif %}
+</section>
+
+{% if editable %}
+<div class="actions">
+  {% if not v.checked_out_at %}
+  <form method="post" action="/visits/{{ v.id }}/checkout">{{ csrf_field() }}<button class="btn primary big block">Check out &amp; finish</button></form>
+  {% endif %}
+  {% if not v.lines or user.is_manager %}
+  <form method="post" action="/visits/{{ v.id }}/delete" data-confirm="Delete this whole visit?">{{ csrf_field() }}<button class="linkish danger">Delete visit</button></form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}{% from "macros.html" import plan_card %}{% block title %}{{ p.code }}{% endblock %}
+{% block content %}
+<div class="titlebar"><h1>{{ p.code }}</h1>
+  {% if user.is_manager %}<div><a class="btn" href="/plan/{{ p.id }}/edit">Edit</a>
+    <form method="post" action="/plan/{{ p.id }}/archive" class="inline" data-confirm="{{ 'Archive' if p.active else 'Restore' }} this program?">{{ csrf_field() }}
+      <button class="btn">{{ 'Archive' if p.active else 'Restore' }}</button></form></div>{% endif %}</div>
+{% if not p.active %}<div class="flash warn">This program is archived and hidden from store pages.</div>{% endif %}
+
+{{ plan_card({'p': p, 'offer': offer, 'expected': expected, 'next': nxt, 'sku_prices': sku_prices}, show_link=False) }}
+
+<section class="card">
+  <h2>Account details</h2>
+  <dl class="kv wide">
+    <dt>Chain / banner</dt><dd>{{ p.chain }}</dd>
+    <dt>Market</dt><dd>{{ p.market }}</dd>
+    <dt>Outlets</dt><dd>{{ p.outlets_text }}{% if p.total_outlets %} (total {{ p.total_outlets }}){% endif %}</dd>
+    <dt>Case cost / frontline</dt><dd>{{ p.case_cost_text }}</dd>
+    <dt>EDV / SRP</dt><dd>{{ p.srp_text }}</dd>
+    <dt>Base shelf price</dt><dd>{{ p.base_price|money }}</dd>
+    <dt>Promo timing</dt><dd>{{ p.timing_text }}</dd>
+    <dt>Owner</dt><dd>{{ p.owner }}</dd>
+    <dt>Source</dt><dd>{{ p.source }}</dd>
+    <dt>Data status</dt><dd>{{ badge(p.data_status) }}{% if p.last_verified %} · verified {{ p.last_verified|d }}{% endif %}</dd>
+  </dl>
+</section>
+
+<section class="card" id="promos">
+  <h2>Promo windows</h2>
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Status</th><th>SKU</th><th>Type</th><th>Offer</th><th class="num">Unit retail</th><th class="num">Case cost</th>
+      <th>Start</th><th>End</th><th>Display</th><th>Source</th>{% if user.is_manager %}<th></th>{% endif %}</tr></thead>
+    <tbody>
+    {% for pr, st in promos %}
+    <tr class="{{ 'dim' if st == 'Expired' }}">
+      <td>{{ badge(st) }}</td><td>{{ pr.sku }}</td><td>{{ pr.offer_type }}</td><td>{{ pr.offer }}</td>
+      <td class="num">{{ pr.unit_retail|money }}</td><td class="num">{{ pr.case_cost|money }}</td>
+      <td>{{ pr.start|d }}</td><td>{{ pr.end|d }}</td><td>{{ 'Y' if pr.display_required else '' }}</td>
+      <td class="small">{{ pr.source }}</td>
+      {% if user.is_manager %}<td class="nowrap"><a href="/promos/{{ pr.id }}/edit">Edit</a>
+        <form method="post" action="/promos/{{ pr.id }}/delete" class="inline" data-confirm="Delete this promo window?">{{ csrf_field() }}<button class="linkish danger">Delete</button></form></td>{% endif %}
+    </tr>
+    {% else %}<tr><td colspan="11" class="muted">No promo windows.</td></tr>{% endfor %}
+    </tbody></table></div>
+
+  {% if user.is_manager %}
+  <details class="addbox"><summary class="btn">+ Add promo window</summary>
+    <form method="post" action="/plan/{{ p.id }}/promos" class="formgrid">{{ csrf_field() }}
+      {% include "_promo_fields.html" %}
+      <button class="btn primary">Add window</button>
+    </form>
+  </details>
+  {% endif %}
+</section>
+
+<div class="grid2">
+<section class="card">
+  <h2>Open follow-ups</h2>
+  {% for i in open_issues %}<a class="item link" href="/issues/{{ i.id }}">{{ badge(i.status) }} {{ i.discrepancy_type }} · {{ i.store.label }}</a>
+  {% else %}<p class="muted">None.</p>{% endfor %}
+</section>
+<section class="card">
+  <h2>Recent checks</h2>
+  {% for l in recent %}
+  <a class="item link" href="/visits/{{ l.visit.id }}">{{ l.visit.visit_date|d }} · {{ l.visit.store.label }} · {{ l.visit.rep.display_name }}
+    {% if l.price_check %}{{ badge(l.price_check) }}{% endif %}
+    {% if l.observed_price is not none %}<span class="small">{{ l.observed_price|money }}</span>{% endif %}</a>
+  {% else %}<p class="muted">No checks logged yet.</p>{% endfor %}
+</section>
+</div>
+{% endblock %}

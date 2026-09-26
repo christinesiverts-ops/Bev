@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block title %}New follow-up{% endblock %}{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<h1>New follow-up</h1>
+<form method="post" class="card formgrid">{{ csrf_field() }}
+  <label class="span2">Store <select name="store_id" required><option value="">Pick…</option>
+    {% for st in stores %}<option value="{{ st.id }}" {% if st.id == store_id %}selected{% endif %}>{{ st.label }}</option>{% endfor %}</select></label>
+  <label class="span2">Program (optional) <select name="program_id"><option value="">—</option>
+    {% for p in progs %}<option value="{{ p.id }}">{{ p.code }}</option>{% endfor %}</select></label>
+  <label>Type <select name="discrepancy_type">{% for d_ in dtypes %}<option>{{ d_ }}</option>{% endfor %}</select></label>
+  <label>Owner <select name="owner_id">{% for u in team %}<option value="{{ u.id }}">{{ u.display_name }}</option>{% endfor %}</select></label>
+  <label>Due <input type="date" name="due_date"></label>
+  <label class="span2">Description <textarea name="description" rows="3" required></textarea></label>
+  <label class="span2">Action needed <input name="action"></label>
+  <button class="btn primary">Create</button>
+</form>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block title %}Stores{% endblock %}
+{% block content %}
+<div class="titlebar"><h1>Stores</h1>
+  <div>{% if user.can_log_visits %}<a class="btn" href="/stores/new">+ Store</a>{% endif %}
+  {% if user.is_manager %}<a class="btn" href="/stores/import">Import list</a>{% endif %}</div></div>
+<form class="filters" method="get">
+  <input name="q" value="{{ f.q }}" placeholder="Store #, city, name" autofocus>
+  <select name="chain" data-autosubmit><option value="">All chains</option>
+    {% for c in chains %}<option {% if f.chain == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+  <button class="btn">Search</button>
+</form>
+{% if not stores %}
+<div class="card"><p>No stores {% if f.q or f.chain %}match{% else %}loaded yet{% endif %}.</p>
+  {% if user.is_manager and not (f.q or f.chain) %}<p>Import your store list (CSV or Excel) from <a href="/stores/import">Import list</a>.</p>{% endif %}
+  {% if user.can_log_visits %}<p>You can also <a href="/stores/new">add a store</a> you're standing in.</p>{% endif %}</div>
+{% endif %}
+<div class="list">
+{% for st in stores %}
+<a class="item link" href="/stores/{{ st.id }}">
+  <strong>{{ st.chain }} #{{ st.store_number }}</strong> {% if not st.verified %}{{ badge('Unverified') }}{% endif %}
+  {% if opened.get(st.id) %}<span class="badge bad">{{ opened[st.id] }} open</span>{% endif %}
+  <div class="small">{{ st.name }} {{ st.address }} {{ st.city }} {{ st.state }}</div>
+  <div class="small muted">{% if last.get(st.id) %}Last visit {{ last[st.id]|d }}{% else %}Never visited{% endif %}</div>
+</a>
+{% endfor %}
+</div>
+{% endblock %}

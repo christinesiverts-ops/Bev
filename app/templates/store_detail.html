@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% from "macros.html" import plan_card %}{% block title %}{{ st.label }}{% endblock %}
+{% block content %}
+<div class="titlebar"><div><h1>{{ st.chain }} #{{ st.store_number }}</h1>
+  <p class="muted">{{ st.name }} {{ st.address }} {{ st.city }} {{ st.state }} {{ st.zip }}{% if st.division %} · {{ st.division }}{% endif %}{% if st.market_unit %} · {{ st.market_unit }}{% endif %}</p></div>
+  <div>{% if user.can_log_visits %}<a class="btn primary" href="/visits/new?store_id={{ st.id }}">Start visit here</a>{% endif %}
+  {% if user.is_manager %}<a class="btn" href="/stores/{{ st.id }}/edit">Edit</a>
+    <a class="btn" href="/issues/new?store_id={{ st.id }}">+ Follow-up</a>{% endif %}</div></div>
+{% if not st.verified %}<div class="flash warn">Added in the field by a rep; not yet verified by a manager.</div>{% endif %}
+
+<section class="card attention">
+  <h2>Open follow-ups <span class="count">{{ issues|length }}</span></h2>
+  {% for i in issues %}
+  <a class="item link {% if i.due_date and i.due_date < t %}overdue{% endif %}" href="/issues/{{ i.id }}">{{ badge(i.status) }} <strong>{{ i.discrepancy_type }}</strong>
+    {% if i.program %}· {{ i.program.brand }}{% endif %} · owner {{ i.owner.display_name if i.owner else '—' }}{% if i.due_date %} · due {{ i.due_date|d }}{% endif %}
+    <div class="small">{{ i.description }}</div></a>
+  {% else %}<p class="muted">None. 👍</p>{% endfor %}
+</section>
+
+<h2>What the shelf should look like today</h2>
+{% if not cards %}<p class="muted">No active programs for chain "{{ st.chain }}"{% if st.division %} / division "{{ st.division }}"{% endif %}. Check the chain name matches the plan.</p>{% endif %}
+<div class="cards">{% for c in cards %}{{ plan_card(c) }}{% endfor %}</div>
+{% if other %}<details><summary class="small">Other {{ st.chain }} programs (other divisions): {{ other|length }}</summary>
+  <ul class="small">{% for p in other %}<li><a href="/plan/{{ p.id }}">{{ p.code }}</a></li>{% endfor %}</ul></details>{% endif %}
+
+<section class="card">
+  <h2>Visit history &amp; notes</h2>
+  {% include "_visit_history.html" %}
+</section>
+{% endblock %}

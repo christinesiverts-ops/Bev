@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% from "macros.html" import yn_select %}{% block title %}Edit check{% endblock %}{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<h1>Edit check</h1>
+<p><a href="/visits/{{ line.visit_id }}">← Back to visit</a> · {{ line.program.code }}</p>
+<form method="post" enctype="multipart/form-data" class="card formgrid">{{ csrf_field() }}
+  {% include "_line_fields.html" %}
+  <p class="hint span2">Plan price is recalculated for the visit date when you save.</p>
+  <button class="btn primary">Save</button>
+</form>
+{% endblock %}

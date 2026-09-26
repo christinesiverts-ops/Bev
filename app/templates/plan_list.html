@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% block title %}Plan{% endblock %}
+{% block content %}
+<div class="titlebar"><h1>Chain program plan</h1>
+  {% if user.is_manager %}<a class="btn" href="/plan/new">+ Program</a>{% endif %}</div>
+<form class="filters" method="get">
+  <input name="q" value="{{ f.q }}" placeholder="Search account, market, callout">
+  <select name="brand" data-autosubmit><option value="">All brands</option>
+    {% for b in brands %}<option {% if f.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}</select>
+  <select name="chain" data-autosubmit><option value="">All chains</option>
+    {% for c in chains %}<option {% if f.chain == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+  <select name="status" data-autosubmit><option value="">Any data status</option>
+    {% for s_ in statuses %}<option {% if f.status == s_ %}selected{% endif %}>{{ s_ }}</option>{% endfor %}</select>
+  <button class="btn">Filter</button>
+</form>
+<p class="muted small">{{ rows|length }} programs · expected price is for today ({{ today()|d }}), SKU "All".</p>
+<div class="table-wrap">
+<table class="data">
+  <thead><tr><th>Brand</th><th>Chain</th><th>Account / Division</th><th>Market</th><th class="num">Outlets</th>
+    <th>Current promo</th><th class="num">Expected today</th><th>Next promo</th><th>Data</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+  <tr>
+    <td><span class="brand-chip brand-{{ r.p.brand|lower|replace("'", '')|replace(' ', '-') }}">{{ r.p.brand }}</span></td>
+    <td>{{ r.p.chain }}</td>
+    <td><a href="/plan/{{ r.p.id }}">{{ r.p.account }}</a></td>
+    <td class="small">{{ r.p.market }}</td>
+    <td class="num">{{ r.p.total_outlets or '' }}</td>
+    <td class="small">{{ r.offer }}</td>
+    <td class="num">{% if r.expected.price is not none %}{{ r.expected.price|money }}{% else %}<span class="muted">Not set</span>{% endif %}</td>
+    <td class="small">{{ r.next|d }}</td>
+    <td>{{ badge(r.p.data_status) }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

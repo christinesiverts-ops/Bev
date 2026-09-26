@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% block title %}Start visit{% endblock %}{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<h1>Start a store visit</h1>
+{% if not st %}
+<form method="get" class="card">
+  <label>Find the store <input name="q" value="{{ q }}" placeholder="Store #, city or chain" autofocus></label>
+  <button class="btn">Search</button>
+</form>
+{% for m in matches %}
+<a class="item link" href="/visits/new?store_id={{ m.id }}"><strong>{{ m.chain }} #{{ m.store_number }}</strong>
+  <span class="small muted">{{ m.address }} {{ m.city }}</span></a>
+{% else %}{% if q %}<p class="muted">No stores match "{{ q }}". <a href="/stores/new">Add it</a>.</p>{% endif %}{% endfor %}
+{% else %}
+<div class="card">
+  <h2>{{ st.chain }} #{{ st.store_number }}</h2>
+  <p class="muted">{{ st.name }} {{ st.address }} {{ st.city }}</p>
+  <form method="post" action="/visits/new" id="checkin-form">{{ csrf_field() }}
+    <input type="hidden" name="store_id" value="{{ st.id }}">
+    <input type="hidden" name="lat"><input type="hidden" name="lng"><input type="hidden" name="accuracy">
+    <p class="small" id="gps-status" data-gps-status>Getting your location… (allow location access so your check-in is verified)</p>
+    <button class="btn primary big block">Check in</button>
+  </form>
+  <p class="small muted">Wrong store? <a href="/visits/new">Pick another</a>.</p>
+</div>
+{% endif %}
+{% endblock %}

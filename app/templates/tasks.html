@@ -1,0 +1,43 @@
+{% extends "base.html" %}{% block title %}Tasks{% endblock %}
+{% block content %}
+<h1>{{ 'Tasks' if user.is_manager or user.role == 'viewer' else 'My tasks' }}</h1>
+<form class="filters" method="get">
+  <select name="status" data-autosubmit>{% for s_ in ['Open','Done',''] %}<option value="{{ s_ }}" {% if f.status == s_ %}selected{% endif %}>{{ s_ or 'All' }}</option>{% endfor %}</select>
+  {% if user.is_manager or user.role == 'viewer' %}
+  <select name="assignee" data-autosubmit><option value="">Everyone</option>
+    {% for u in team %}<option value="{{ u.id }}" {% if f.assignee == u.id %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select>{% endif %}
+</form>
+
+{% if user.is_manager %}
+<details class="addbox"><summary class="btn">+ Assign a task</summary>
+<form method="post" action="/tasks" class="card formgrid">{{ csrf_field() }}
+  <label class="span2">Title <input name="title" required placeholder="e.g. Check WinCo Tier 2 displays"></label>
+  <label class="span2">Details <textarea name="description" rows="2"></textarea></label>
+  <label class="span2">Assign to (hold Ctrl/⌘ for several)
+    <select name="assignee_id" multiple size="5" required>{% for u in team %}<option value="{{ u.id }}">{{ u.display_name }}</option>{% endfor %}</select></label>
+  <label>Due <input type="date" name="due_date"></label>
+  <label>Program <select name="program_id"><option value="">—</option>{% for p in progs %}<option value="{{ p.id }}">{{ p.code }}</option>{% endfor %}</select></label>
+  <label class="span2">Store <select name="store_id"><option value="">—</option>{% for st in stores %}<option value="{{ st.id }}">{{ st.label }}</option>{% endfor %}</select></label>
+  <button class="btn primary">Assign</button>
+</form></details>
+{% endif %}
+
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>Task</th><th>Assignee</th><th>Due</th><th>Store / program</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for t_ in tasks %}
+  <tr class="{% if t_.status == 'Open' and t_.due_date and t_.due_date < t %}overdue{% endif %}">
+    <td><strong>{{ t_.title }}</strong>{% if t_.description %}<div class="small">{{ t_.description }}</div>{% endif %}
+      {% if t_.completion_note %}<div class="small muted">Done: {{ t_.completion_note }}</div>{% endif %}</td>
+    <td>{{ t_.assignee.display_name }}</td><td class="nowrap">{{ t_.due_date|d }}</td>
+    <td class="small">{% if t_.store %}<a href="/stores/{{ t_.store.id }}">{{ t_.store.label }}</a><br>{% endif %}{% if t_.program %}<a href="/plan/{{ t_.program.id }}">{{ t_.program.code }}</a>{% endif %}</td>
+    <td>{{ badge(t_.status) }}</td>
+    <td class="nowrap">{% if user.can_log_visits and (t_.assignee_id == user.id or user.is_manager) %}
+      <form method="post" action="/tasks/{{ t_.id }}/done" class="inline">{{ csrf_field() }}
+        {% if t_.status == 'Open' %}<input name="note" placeholder="Note" class="short">{% endif %}
+        <button class="btn small-btn">{{ 'Done' if t_.status == 'Open' else 'Reopen' }}</button></form>{% endif %}
+      {% if user.is_manager %}<form method="post" action="/tasks/{{ t_.id }}/delete" class="inline" data-confirm="Delete task?">{{ csrf_field() }}<button class="linkish danger small">Delete</button></form>{% endif %}</td>
+  </tr>
+  {% else %}<tr><td colspan="6" class="muted">No tasks.</td></tr>{% endfor %}
+  </tbody></table></div>
+{% endblock %}

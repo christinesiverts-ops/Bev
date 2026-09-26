@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block title %}Follow-ups{% endblock %}
+{% block content %}
+<div class="titlebar"><h1>Follow-ups</h1>{% if user.is_manager %}<a class="btn" href="/issues/new">+ Follow-up</a>{% endif %}</div>
+<form class="filters" method="get">
+  <select name="status" data-autosubmit>{% for v_, l_ in [('open','Open + in progress'),('Open','Open'),('In Progress','In progress'),('Resolved','Resolved'),('all','All')] %}
+    <option value="{{ v_ }}" {% if f.status == v_ %}selected{% endif %}>{{ l_ }}</option>{% endfor %}</select>
+  <select name="owner" data-autosubmit><option value="">Any owner</option>
+    {% for u in team %}<option value="{{ u.id }}" {% if f.owner == u.id %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select>
+  <select name="brand" data-autosubmit><option value="">All brands</option>
+    {% for b in brands %}<option {% if f.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}</select>
+  <select name="dtype" data-autosubmit><option value="">Any type</option>
+    {% for d_ in dtypes %}<option {% if f.dtype == d_ %}selected{% endif %}>{{ d_ }}</option>{% endfor %}</select>
+  <label class="inline-label"><input type="checkbox" name="overdue" value="1" {% if f.overdue %}checked{% endif %} data-autosubmit> Overdue only</label>
+</form>
+<p class="muted small">{{ issues|length }} follow-ups</p>
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>#</th><th>Status</th><th>Type</th><th>Store</th><th>Brand</th><th>Owner</th><th>Due</th><th>Description</th></tr></thead>
+  <tbody>
+  {% for i in issues %}
+  <tr class="{% if i.status != 'Resolved' and i.due_date and i.due_date < t %}overdue{% endif %}">
+    <td><a href="/issues/{{ i.id }}">{{ i.id }}</a></td><td>{{ badge(i.status) }}</td><td>{{ i.discrepancy_type }}</td>
+    <td><a href="/stores/{{ i.store.id }}">{{ i.store.label }}</a></td><td>{{ i.program.brand if i.program else '' }}</td>
+    <td>{{ i.owner.display_name if i.owner else '—' }}</td><td class="nowrap">{{ i.due_date|d }}</td>
+    <td class="small">{{ i.description|truncate(100) }}</td></tr>
+  {% else %}<tr><td colspan="8" class="muted">Nothing here.</td></tr>{% endfor %}
+  </tbody></table></div>
+{% endblock %}

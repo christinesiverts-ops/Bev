@@ -1,0 +1,42 @@
+{% extends "base.html" %}{% block title %}Follow-up #{{ iss.id }}{% endblock %}{% block mainclass %}narrow{% endblock %}
+{% block content %}
+<h1>Follow-up #{{ iss.id }} {{ badge(iss.status) }}</h1>
+<div class="card">
+  <dl class="kv wide">
+    <dt>Store</dt><dd><a href="/stores/{{ iss.store.id }}">{{ iss.store.label }}</a></dd>
+    {% if iss.program %}<dt>Program</dt><dd><a href="/plan/{{ iss.program.id }}">{{ iss.program.code }}</a></dd>{% endif %}
+    <dt>Type</dt><dd>{{ iss.discrepancy_type }}</dd>
+    <dt>Description</dt><dd>{{ iss.description }}</dd>
+    <dt>Action needed</dt><dd>{{ iss.action or '—' }}</dd>
+    <dt>Owner</dt><dd>{{ iss.owner.display_name if iss.owner else '—' }}</dd>
+    <dt>Due</dt><dd class="{% if iss.status != 'Resolved' and iss.due_date and iss.due_date < t %}overdue-text{% endif %}">{{ iss.due_date|d or '—' }}</dd>
+    <dt>Raised</dt><dd>{{ iss.created_by.display_name }} · {{ iss.created_at|local }}</dd>
+    {% if iss.resolved_at %}<dt>Resolved</dt><dd>{{ iss.resolved_at|local }}</dd>{% endif %}
+  </dl>
+  {% if photos %}<div class="thumbs">{% for ph in photos %}<a href="/photos/{{ ph.id }}" target="_blank" rel="noopener"><img src="/photos/{{ ph.id }}" alt="Photo" loading="lazy"></a>{% endfor %}</div>{% endif %}
+</div>
+
+<section class="card">
+  <h2>History</h2>
+  {% for u in iss.updates %}
+  <div class="item"><span class="small muted">{{ u.created_at|local }} · {{ u.user.display_name }}</span> {{ badge(u.status) }}
+    {% if u.note %}<div>{{ u.note }}</div>{% endif %}</div>
+  {% endfor %}
+</section>
+
+{% if user.can_log_visits %}
+<section class="card">
+  <h2>Update</h2>
+  <form method="post" action="/issues/{{ iss.id }}/update" class="formgrid">{{ csrf_field() }}
+    <label>Status <select name="status">{% for s_ in statuses %}<option {% if iss.status == s_ %}selected{% endif %}>{{ s_ }}</option>{% endfor %}</select></label>
+    {% if user.is_manager %}
+    <label>Owner <select name="owner_id">{% for u in team %}<option value="{{ u.id }}" {% if iss.owner_id == u.id %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
+    <label>Due <input type="date" name="due_date" value="{{ iss.due_date.isoformat() if iss.due_date else '' }}"></label>
+    <label class="span2">Action needed <input name="action" value="{{ iss.action }}"></label>
+    {% endif %}
+    <label class="span2">Note <textarea name="note" rows="2" placeholder="Required when resolving: what was done?"></textarea></label>
+    <button class="btn primary">Save</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}
