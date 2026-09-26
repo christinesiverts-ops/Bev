@@ -1,0 +1,22 @@
+Column,Microsoft Lists column type,Required,Notes
+Title,Single line of text,Yes,"Auto: Store # + date, e.g. ""Safeway 1234 - 9/26/26"""
+Visit Date,Date,Yes,Default = Today
+Rep,Person,Yes,Default = [Me]; also captured automatically as Created By
+Program ID,Choice (or Lookup),Yes,"Values = Program ID column of Chain Program, e.g. ""Henry's | WinCo Foods"""
+Store # / Location,Single line of text,Yes,
+SKU / Pack Checked,Choice,No,"All, 12pk, Singles (Frosted Grape/Tropical Punch), 4pk, 8pk, 500mL, Root Beer, Black Cherry Cream, Orange Cream, Vanilla Cream, Margarita 4pk, Mojito 4pk"
+Expected Price,Currency,No,Copied from the plan at submit time (Power Apps phase) so the audit is frozen
+Observed Shelf Price,Currency,No,
+Price Check,Choice,No,"Match, Over plan, Under plan, No plan price"
+Shelf Tag Correct?,Yes/No,No,
+Shelf Location per Planogram?,Yes/No,No,
+All Authorized SKUs In Stock?,Yes/No,No,
+Display per Callout?,Choice,No,"Yes, No, N/A"
+Discrepancy Type,Choice,Yes,"None, Price - over plan, Price - under plan, Missing / wrong shelf tag, Expired promo tag still up, Out of stock / missing SKU, Wrong shelf location (planogram), Display not built, Display built - wrong product/price, Unauthorized SKU on shelf, Backstock missing, Other"
+Visit Notes,Multiple lines of text,No,Turn on 'Append changes to existing text' to keep a note trail
+Shelf Photo,Image,No,Use an Image column rather than attachments (attachments ignore item-level permissions)
+Follow-up Action,Multiple lines of text,No,
+Follow-up Owner,Person,No,
+Due Date,Date,No,
+Status,Choice,Yes,"No Issue, Open, In Progress, Resolved"
+Resolved Date,Date,No,
