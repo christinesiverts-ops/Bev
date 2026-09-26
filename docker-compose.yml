@@ -9,9 +9,27 @@ services:
       DATA_DIR: /data
     volumes:
       - audit-data:/data
-    # Only reachable from this server. nginx proxies https://your-domain -> http://127.0.0.1:8000
+    # Container listens on 8000; published on the host's loopback only. Point the reverse proxy at 127.0.0.1:${APP_PORT}.
     ports:
       - "127.0.0.1:${APP_PORT:-8000}:8000"
+    # Resource caps: one uvicorn worker + SQLite for a ~9-person team needs well under these.
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: "1.0"
+    pids_limit: 200
+    # Hardening: no privileges needed. Only /data (volume) and /tmp are writable.
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   audit-data:
