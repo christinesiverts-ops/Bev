@@ -1,22 +1,24 @@
-{% extends "base.html" %}{% block title %}{{ 'Edit' if p else 'New' }} program{% endblock %}{% block mainclass %}narrow{% endblock %}
+{% extends "base.html" %}{% block title %}{{ 'Edit' if p else 'New' }} program{% endblock %}{% block main %}page-narrow{% endblock %}
 {% block content %}
-<h1>{{ 'Edit ' ~ p.code if p else 'New program' }}</h1>
-<form method="post" class="card formgrid">{{ csrf_field() }}
+<h1 class="mb-4">{{ 'Edit ' ~ p.code if p else 'New program' }}</h1>
+<form method="post" class="card-pad">{{ csrf_field() }}
+  <div class="form-grid">
   {% for name, label, kind in fields %}
     {% set val = (p|attr(name) if p else None) %}
     {% if kind == 'brand' %}
-      <label>{{ label }} <select name="{{ name }}" required>{% for b in brands %}<option {% if val == b %}selected{% endif %}>{{ b }}</option>{% endfor %}</select></label>
+      <label class="field"><span class="label">{{ label }}</span><select class="input" name="{{ name }}" required>{% for b in brands %}<option {% if val == b %}selected{% endif %}>{{ b }}</option>{% endfor %}</select></label>
     {% elif kind == 'status' %}
-      <label>{{ label }} <select name="{{ name }}">{% for s_ in statuses %}<option {% if val == s_ %}selected{% endif %}>{{ s_ }}</option>{% endfor %}</select></label>
+      <label class="field"><span class="label">{{ label }}</span><select class="input" name="{{ name }}">{% for s_ in statuses %}<option {% if val == s_ %}selected{% endif %}>{{ s_ }}</option>{% endfor %}</select></label>
     {% elif kind == 'area' %}
-      <label class="span2">{{ label }} <textarea name="{{ name }}" rows="3">{{ val or '' }}</textarea></label>
+      <label class="field full"><span class="label">{{ label }}</span><textarea class="input" name="{{ name }}" rows="3">{{ val or '' }}</textarea></label>
     {% elif kind == 'date' %}
-      <label>{{ label }} <input type="date" name="{{ name }}" value="{{ val.isoformat() if val else '' }}"></label>
+      <label class="field"><span class="label">{{ label }}</span><input class="input" type="date" name="{{ name }}" value="{{ val.isoformat() if val else '' }}"></label>
     {% else %}
-      <label>{{ label }} <input name="{{ name }}" value="{{ val if val is not none else '' }}" {% if kind in ('money','int') %}inputmode="decimal"{% endif %} {% if name in ('chain','account') %}required{% endif %}></label>
+      <label class="field"><span class="label">{{ label }}</span><input class="input" name="{{ name }}" value="{{ val if val is not none else '' }}" {% if kind in ('money','int') %}inputmode="decimal"{% endif %} {% if name in ('chain','account') %}required{% endif %}></label>
     {% endif %}
   {% endfor %}
-  <p class="hint span2">Program ID is built as "Brand | Account / Division" and must be unique. Base shelf price is the everyday shelf price when no retail promo is active.</p>
-  <button class="btn primary">Save</button>
+  </div>
+  <p class="hint mb-4">Program ID is built as "Brand | Account / Division" and must be unique. Base shelf price is the everyday shelf price when no retail promo is active.</p>
+  <button class="btn btn-primary btn-lg" data-loading="Saving…">Save program</button>
 </form>
 {% endblock %}

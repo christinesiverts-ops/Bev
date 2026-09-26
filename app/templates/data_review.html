@@ -1,29 +1,33 @@
-{% extends "base.html" %}{% block title %}Data review{% endblock %}
+{% extends "base.html" %}{% block title %}Data review{% endblock %}{% block main %}page-narrow{% endblock %}
 {% block content %}
-<h1>Data review</h1>
-<p class="muted">Questions found while merging the Non-Alc Chain doc (9/8/26) with the HW Soda hot sheet (8/25/25). Resolve them, update the plan, then set the program's Data Status to "Current (2026)".</p>
+<h1 class="font-display text-3xl font-semibold">Data review</h1>
+<p class="mb-5 mt-1 text-muted-foreground">Questions found while merging the Non-Alc Chain doc (9/8/26) with the HW Soda hot sheet (8/25/25). Resolve each one, update the program, then set its data status to "Current (2026)".</p>
+<div class="space-y-3">
 {% for it in items %}
-<article class="card {{ 'dim' if it.resolved }}">
-  <header class="titlebar"><strong>{{ it.account }} <span class="muted">· {{ it.brand }}</span></strong>
-    {% if it.resolved %}{{ badge('Resolved') }}{% else %}{{ badge('Open') }}{% endif %}</header>
-  <p>{{ it.issue }}</p>
-  <p class="small"><strong>Action:</strong> {{ it.action }}</p>
+<article class="card border-l-4 p-4 {{ 'edge-success opacity-70' if it.resolved else 'edge-warning' }}">
+  <div class="flex flex-wrap items-center justify-between gap-2"><p class="font-semibold">{{ it.account }} <span class="font-normal text-muted-foreground">· {{ it.brand }}</span></p>
+    {{ badge('Resolved' if it.resolved else 'Open') }}</div>
+  <p class="mt-2 text-sm">{{ it.issue }}</p>
+  <p class="mt-2 text-sm"><span class="eyebrow">Action</span><br>{{ it.action }}</p>
   {% if user.is_manager %}
-  <form method="post" action="/data-review/{{ it.id }}" class="inline">{{ csrf_field() }}
-    <input name="owner" value="{{ it.owner }}" placeholder="Owner">
-    <select name="resolved"><option value="N">Open</option><option value="Y" {% if it.resolved %}selected{% endif %}>Resolved</option></select>
-    <button class="btn small-btn">Save</button></form>
-  {% elif it.owner %}<p class="small muted">Owner: {{ it.owner }}</p>{% endif %}
+  <form method="post" action="/data-review/{{ it.id }}" class="mt-3 flex flex-wrap gap-2">{{ csrf_field() }}
+    <input class="input min-h-10 w-auto flex-1 text-sm" name="owner" value="{{ it.owner }}" placeholder="Owner" aria-label="Owner">
+    <select class="input min-h-10 w-auto text-sm" name="resolved" aria-label="Status"><option value="N">Open</option><option value="Y" {% if it.resolved %}selected{% endif %}>Resolved</option></select>
+    <button class="btn btn-sm">Save</button></form>
+  {% elif it.owner %}<p class="hint mt-2">Owner: {{ it.owner }}</p>{% endif %}
 </article>
 {% endfor %}
+</div>
 {% if user.is_manager %}
-<details class="addbox"><summary class="btn">+ Add item</summary>
-<form method="post" action="/data-review" class="card formgrid">{{ csrf_field() }}
-  <label>Account <input name="account"></label><label>Brand <input name="brand"></label>
-  <label class="span2">Issue <textarea name="issue" rows="2" required></textarea></label>
-  <label class="span2">Action needed <textarea name="action" rows="2"></textarea></label>
-  <label>Owner <input name="owner"></label>
-  <button class="btn primary">Add</button>
+<details class="card-pad mt-5"><summary class="cursor-pointer font-semibold">+ Add an item</summary>
+<form method="post" action="/data-review" class="mt-4">{{ csrf_field() }}
+  <div class="form-grid">
+  <label class="field"><span class="label">Account</span><input class="input" name="account"></label><label class="field"><span class="label">Brand</span><input class="input" name="brand"></label>
+  <label class="field full"><span class="label">Issue</span><textarea class="input" name="issue" rows="2" required></textarea></label>
+  <label class="field full"><span class="label">Action needed</span><textarea class="input" name="action" rows="2"></textarea></label>
+  <label class="field"><span class="label">Owner</span><input class="input" name="owner"></label>
+  </div>
+  <button class="btn btn-primary">Add</button>
 </form></details>
 {% endif %}
 {% endblock %}

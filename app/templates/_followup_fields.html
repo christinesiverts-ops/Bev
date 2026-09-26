@@ -1,0 +1,9 @@
+<fieldset class="mb-4 rounded-2xl border border-dashed border-warning/60 bg-warning/5 p-4" data-followup>
+  <legend class="px-1 text-[13px] font-bold text-warning">Follow-up · opens when something's wrong</legend>
+  <div class="grid gap-x-4 sm:grid-cols-2">
+    <label class="field"><span class="label">Owner</span>
+      <select class="input" name="owner_id">{% for u in team %}<option value="{{ u.id }}" {% if u.id == v.rep_id %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
+    <label class="field"><span class="label">Due</span><input class="input" type="date" name="due_date" value="{{ default_due.isoformat() }}"></label>
+  </div>
+  <label class="field !mb-0"><span class="label">Action needed</span><input class="input" name="action" placeholder="e.g. Ask SM to hang the 2/$3 tag"></label>
+</fieldset>

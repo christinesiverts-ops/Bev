@@ -13,10 +13,17 @@ A self-hosted, phone-friendly web app. **See [docs/DEPLOY.md](docs/DEPLOY.md) to
   - notes and photos
   - the expected price is frozen into each audit record
 - **Follow-ups:** raised automatically from discrepancies, each with an owner, due date and a status history. They're shown on the store page and on the next visit.
+- **Wins:** new displays, cold placements (cooler and cold vault doors), new SKUs, secondary placements and ads, each with photos, cases and facings. Display and placement wins are re-checked on later visits ("Still up / Gone").
 - **Tasks:** managers assign work to reps.
 - **Dashboard:** visits, price match rate, open and overdue follow-ups by rep and brand, and stores not visited recently.
 - **Roles:** Manager (edits plan, manages users), Rep (views plan, edits only their own visits), Viewer (read-only).
 - **Data:** full Excel export, plan import from `Chain_Audit_Tool.xlsx`, store list import, and nightly backups.
+
+**Design:** the "Cellar & Ivory" look.
+- Light theme for reps in stores; dark theme for managers. Anyone can switch from their menu.
+- Company name, logo, colors, and brand, product and retailer logos are set under **Branding**. Colors are contrast-checked automatically.
+- Styling uses Tailwind CSS. The compiled `app/static/app.css` is committed, so Docker builds don't need Node.
+- After changing templates, rebuild the CSS with `npm install && npm run build:css`.
 
 To run it locally for development:
 
@@ -36,5 +43,6 @@ python -m pytest -q
 | `docs/visit_log_list_schema.csv` | Microsoft Lists column spec (the alternative M365 route) |
 | `tools/program_data.py` | Seed data used by both the workbook and the app |
 | `tools/build_workbook.py` | Regenerates the workbook |
+| `tools/extract_logos.py` | Re-extracts brand, product and retailer logos from the two source documents |
 
 Programs marked **Confirm for 2026** still use 2025 hot-sheet pricing. See **Data review** in the app.

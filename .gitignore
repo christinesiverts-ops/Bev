@@ -4,3 +4,4 @@ __pycache__/
 *.vals
 .env
 data/
+node_modules

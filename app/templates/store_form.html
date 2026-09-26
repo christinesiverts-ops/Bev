@@ -1,23 +1,27 @@
-{% extends "base.html" %}{% block title %}{{ 'Edit' if st else 'New' }} store{% endblock %}{% block mainclass %}narrow{% endblock %}
+{% extends "base.html" %}{% block title %}{{ 'Edit' if st else 'Add' }} store{% endblock %}{% block main %}page-narrow{% endblock %}
 {% block content %}
-<h1>{{ 'Edit ' ~ st.label if st else 'Add a store' }}</h1>
-{% if not st and not user.is_manager %}<p class="flash info">Stores you add are marked unverified until your manager checks them.</p>{% endif %}
-<form method="post" class="card formgrid">{{ csrf_field() }}
+<h1 class="mb-1">{{ 'Edit ' ~ st.label if st else 'Add a store' }}</h1>
+{% if not st and not user.is_manager %}<p class="mb-4 text-muted-foreground">Stores you add are marked unverified until your manager checks them.</p>{% endif %}
+<form method="post" class="card-pad">{{ csrf_field() }}
+  <div class="form-grid">
   {% for name, label in fields %}
     {% set val = (st|attr(name) if st else '') %}
     {% if name == 'chain' %}
-    <label>{{ label }} <input name="chain" value="{{ val or '' }}" list="chains" required>
+    <label class="field"><span class="label">{{ label }}</span><input class="input" name="chain" value="{{ val or '' }}" list="chains" required>
       <datalist id="chains">{% for c in chains %}<option>{{ c }}</option>{% endfor %}</datalist></label>
     {% else %}
-    <label>{{ label }} <input name="{{ name }}" value="{{ val if val is not none else '' }}" {% if name in ('lat','lng') %}inputmode="decimal"{% endif %} {% if name == 'store_number' %}required{% endif %}></label>
+    <label class="field"><span class="label">{{ label }}</span><input class="input" name="{{ name }}" value="{{ val if val is not none else '' }}" {% if name in ('lat','lng') %}inputmode="decimal"{% endif %} {% if name == 'store_number' %}required{% endif %}></label>
     {% endif %}
   {% endfor %}
-  <p class="hint span2">Chain must match the plan's Chain / Banner exactly (pick from the list) so the right programs show. Division narrows it further, e.g. "Seattle Div. #27".
+  </div>
+  <p class="hint mb-4">Pick the chain from the list so it matches the plan. Division narrows the programs further, for example "Seattle Div. #27".
     {% if not st %}<button type="button" class="linkish" data-fill-gps>Use my current location for lat/long</button>{% endif %}</p>
   {% if st %}
-  <label>Verified <select name="verified"><option value="Y">Yes</option><option value="N" {% if not st.verified %}selected{% endif %}>No</option></select></label>
-  <label>Active <select name="active"><option value="Y">Yes</option><option value="N" {% if not st.active %}selected{% endif %}>No (hide)</option></select></label>
+  <div class="form-grid">
+    <label class="field"><span class="label">Verified</span><select class="input" name="verified"><option value="Y">Yes</option><option value="N" {% if not st.verified %}selected{% endif %}>No</option></select></label>
+    <label class="field"><span class="label">Active</span><select class="input" name="active"><option value="Y">Yes</option><option value="N" {% if not st.active %}selected{% endif %}>No (hide)</option></select></label>
+  </div>
   {% endif %}
-  <button class="btn primary">Save</button>
+  <button class="btn btn-primary btn-lg" data-loading="Saving…">Save store</button>
 </form>
 {% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}{% block title %}Branding{% endblock %}
+{% macro logo_row(kind, name, url, label) %}
+<div class="flex flex-wrap items-center gap-3 py-3">
+  {% if url %}<span class="logo-plate {{ 'h-14 w-20' if kind == 'products' else 'h-12 w-20' }}"><img src="{{ url }}" alt="{{ name }}"></span>
+  {% else %}<span class="grid h-12 w-20 place-items-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">None</span>{% endif %}
+  <span class="min-w-0 flex-1"><span class="block font-semibold">{{ label }}</span><span class="hint block">{{ 'Uploaded' if url and url.startswith('/branding') else 'From your source documents' if url else 'Not set: a text mark is shown' }}</span></span>
+  <form method="post" action="/admin/branding/logo" enctype="multipart/form-data" class="flex items-center gap-2">{{ csrf_field() }}
+    <input type="hidden" name="kind" value="{{ kind }}"><input type="hidden" name="name" value="{{ name }}">
+    <input class="input min-h-9 w-52 py-1.5 text-xs" type="file" name="file" accept="image/png,image/jpeg,image/webp" required aria-label="Upload {{ label }}">
+    <button class="btn btn-sm">Upload</button></form>
+  {% if url and url.startswith('/branding') %}<form method="post" action="/admin/branding/logo/delete">{{ csrf_field() }}<input type="hidden" name="kind" value="{{ kind }}"><input type="hidden" name="name" value="{{ name }}"><button class="btn btn-danger btn-sm">Remove</button></form>{% endif %}
+</div>
+{% endmacro %}
+{% block content %}
+<h1 class="font-display text-3xl font-semibold">Branding</h1>
+<p class="mb-5 mt-1 text-muted-foreground">Your company name, logo and colors appear throughout the app. Colors are checked for readability automatically.</p>
+<div class="grid gap-5 lg:grid-cols-2">
+  <section id="company" class="card-pad scroll-mt-24">
+    <h2 class="mb-4">Company</h2>
+    <form method="post" action="/admin/branding">{{ csrf_field() }}
+      <label class="field"><span class="label">Company name</span><input class="input" name="company_name" value="{{ st.company_name }}" maxlength="80"></label>
+      <div class="grid grid-cols-2 gap-4">
+        <label class="field"><span class="label">Primary color</span><span class="flex items-center gap-2"><input type="color" class="h-12 w-14 cursor-pointer rounded-xl border border-input bg-card p-1" name="primary_color" value="{{ st.primary_color }}"><span class="text-sm tabular-nums text-muted-foreground">{{ st.primary_color }}</span></span></label>
+        <label class="field"><span class="label">Accent color</span><span class="flex items-center gap-2"><input type="color" class="h-12 w-14 cursor-pointer rounded-xl border border-input bg-card p-1" name="accent_color" value="{{ st.accent_color }}"><span class="text-sm tabular-nums text-muted-foreground">{{ st.accent_color }}</span></span></label>
+      </div>
+      <p class="hint mb-4">Primary is used for buttons and needs to be dark enough for white text. Accent is used for highlights, focus rings and wins.</p>
+      <div class="mb-4 flex flex-wrap items-center gap-2"><span class="btn btn-primary pointer-events-none">Primary button</span><span class="btn btn-accent pointer-events-none">Accent</span><span class="pill pill-accent">Win</span></div>
+      <div class="flex flex-wrap gap-2"><button class="btn btn-primary" data-loading="Saving…">Save</button></div>
+    </form>
+    <form method="post" action="/admin/branding/reset-colors" class="mt-2">{{ csrf_field() }}<button class="linkish text-muted-foreground">Reset to default colors</button></form>
+    <div class="mt-4 border-t border-border">{{ logo_row('company', 'logo', company_logo(), 'Company logo') }}</div>
+    <p class="hint">PNG, JPEG or WEBP. A transparent PNG looks best.</p>
+  </section>
+
+  <section id="brands" class="card-pad scroll-mt-24">
+    <h2>Brand logos</h2>
+    <div class="divide-rows">{% for b in brands %}{{ logo_row('brands', b, brand_logo(b), b) }}{% endfor %}</div>
+    <h2 class="mt-5">Product photos</h2>
+    <p class="hint">Shown on the sign-in screen.</p>
+    <div class="divide-rows">{% for b in brands %}{{ logo_row('products', b, product_img(b), b) }}{% endfor %}</div>
+  </section>
+
+  <section id="chains" class="card-pad scroll-mt-24 lg:col-span-2">
+    <h2>Retailer logos</h2>
+    <p class="hint">Help reps spot the right account at a glance.</p>
+    <div class="grid gap-x-8 divide-rows lg:grid-cols-2 lg:divide-y-0">{% for c in chains %}{{ logo_row('chains', c, chain_logo(c), c) }}{% endfor %}</div>
+  </section>
+</div>
+{% endblock %}

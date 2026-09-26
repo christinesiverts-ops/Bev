@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from .. import pricing
 from ..common import flash, opt_float, redirect, render, s, today
 from ..db import get_db
-from ..models import Issue, Program, Store, User, Visit
+from ..models import Issue, Program, Store, User, Visit, Win
 from ..security import csrf_protect, current_user, log, require_field, require_manager
 from ..store_match import programs_for_store
 
@@ -162,8 +162,10 @@ def store_detail(sid: int, request: Request, user: User = Depends(current_user),
                         .order_by(Visit.checked_in_at.desc()).limit(20)).all()
     issues = db.scalars(select(Issue).where(Issue.store_id == st.id, Issue.status != "Resolved")
                         .order_by(Issue.created_at.desc())).all()
+    placements = db.scalars(select(Win).where(Win.store_id == st.id, Win.tracked.is_(True))
+                            .order_by(Win.status, Win.created_at.desc()).limit(40)).all()
     return render(request, "store_detail.html", user=user, st=st, cards=cards, other=other, visits=visits,
-                  issues=issues, t=t)
+                  issues=issues, t=t, placements=placements)
 
 
 @router.get("/stores/{sid}/edit")

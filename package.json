@@ -1,0 +1,12 @@
+{
+  "name": "chain-audit-ui",
+  "private": true,
+  "description": "Builds app/static/app.css from Tailwind. The compiled CSS is committed, so Docker builds don't need Node.",
+  "scripts": {
+    "build:css": "tailwindcss -i app/static/src/input.css -o app/static/app.css --minify",
+    "watch:css": "tailwindcss -i app/static/src/input.css -o app/static/app.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

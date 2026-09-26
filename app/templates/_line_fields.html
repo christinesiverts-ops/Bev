@@ -1,14 +1,23 @@
-<label>SKU / pack checked
-  <select name="sku" data-sku>{% for k in skus %}<option {% if line and line.sku == k %}selected{% endif %}>{{ k }}</option>{% endfor %}</select></label>
-<label>Shelf price you see ($)
-  <input name="observed_price" inputmode="decimal" placeholder="e.g. 5.99" value="{{ line.observed_price if line and line.observed_price is not none else '' }}" data-observed></label>
-<p class="expected span2" data-expected-out>{% if line %}Plan price: {{ line.expected_price|money or 'Not set' }} ({{ line.expected_basis }}){% endif %}</p>
-<label>Shelf tag correct? {{ yn_select('tag_ok', line.tag_ok if line else None) }}</label>
-<label>On planogram / right location? {{ yn_select('planogram_ok', line.planogram_ok if line else None) }}</label>
-<label>All authorized SKUs in stock? {{ yn_select('in_stock_ok', line.in_stock_ok if line else None) }}</label>
-<label>Display per callout?
-  <select name="display"><option value="">—</option>{% for d_ in display_choices %}<option {% if line and line.display == d_ %}selected{% endif %}>{{ d_ }}</option>{% endfor %}</select></label>
-<label class="span2">Discrepancy
-  <select name="discrepancy_type" data-dtype>{% for d_ in dtypes %}<option {% if line and line.discrepancy_type == d_ %}selected{% endif %}>{{ d_ }}</option>{% endfor %}</select></label>
-<label class="span2">Notes <textarea name="notes" rows="3" placeholder="What you saw, who you spoke to, what was fixed">{{ line.notes if line else '' }}</textarea></label>
-<label class="span2">Photos <input type="file" name="photos" accept="image/*" multiple></label>
+{# expects: line (or None), skus, dtypes, display_choices, pid (program id for live pricing) #}
+<div class="grid gap-x-4 sm:grid-cols-2">
+  <label class="field"><span class="label">SKU / pack</span>
+    <select class="input" name="sku" data-sku>{% for k in skus %}<option {% if line and line.sku == k %}selected{% endif %}>{{ k }}</option>{% endfor %}</select></label>
+  <label class="field"><span class="label">Shelf price you see</span>
+    <span class="relative block"><span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">$</span>
+    <input class="input input-money" name="observed_price" inputmode="decimal" autocomplete="off" placeholder="0.00"
+           value="{{ '%.2f'|format(line.observed_price) if line and line.observed_price is not none else '' }}" data-observed></span></label>
+</div>
+<p class="-mt-2 mb-4 min-h-6 text-sm font-semibold" data-verdict role="status" aria-live="polite">{% if line and line.price_check %}{{ badge(line.price_check) }}{% endif %}</p>
+<div class="mb-3 divide-rows rounded-2xl border border-border bg-raised px-4">
+  <div class="check-row"><span class="text-sm font-medium">Shelf tag correct</span>{{ seg_yn('tag_ok', line.tag_ok if line else None) }}</div>
+  <div class="check-row"><span class="text-sm font-medium">Right shelf location</span>{{ seg_yn('planogram_ok', line.planogram_ok if line else None) }}</div>
+  <div class="check-row"><span class="text-sm font-medium">All SKUs in stock</span>{{ seg_yn('in_stock_ok', line.in_stock_ok if line else None) }}</div>
+  <div class="check-row"><span class="text-sm font-medium">Display per callout</span>{{ seg_display('display', line.display if line else '', display_choices) }}</div>
+</div>
+<label class="field"><span class="label">Discrepancy</span>
+  <select class="input" name="discrepancy_type" data-dtype>{% for d_ in dtypes %}<option {% if line and line.discrepancy_type == d_ %}selected{% endif %}>{{ d_ }}</option>{% endfor %}</select>
+  <span class="hint mt-1 block">Price mismatches are tagged automatically.</span></label>
+<label class="field"><span class="label">Notes</span>
+  <textarea class="input" name="notes" rows="3" placeholder="What you saw, who you talked to, what you fixed">{{ line.notes if line else '' }}</textarea></label>
+<label class="field"><span class="label">Photos</span>
+  <input class="input" type="file" name="photos" accept="image/*" multiple data-photos></label>

@@ -8,7 +8,7 @@ from openpyxl.utils import get_column_letter
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .models import AuditLine, DataReviewItem, Issue, Program, Promo, Store, Task, Visit
+from .models import AuditLine, DataReviewItem, Issue, Program, Promo, Store, Task, Visit, Win
 from .common import local_dt
 
 # Column names match the Chain Audit Tool workbook so exports can be re-imported.
@@ -83,6 +83,13 @@ def export_workbook(db: Session) -> bytes:
            [[v.id, v.visit_date, v.rep.display_name, v.store.chain, v.store.store_number, v.store.city,
              local_dt(v.checked_in_at), local_dt(v.checked_out_at), v.distance_m, len(v.lines), v.notes,
              len(v.photos)] for v in visits], {11: 50})
+    wins = db.scalars(select(Win).order_by(Win.id)).all()
+    _sheet(wb, "Wins & Placements", ["ID", "Visit Date", "Rep", "Chain", "Store #", "City", "Brand", "Program ID", "Win Type",
+                                     "Location", "Cases", "Facings / Doors", "Tracked", "Status", "Last Checked", "Notes",
+                                     "Photos"],
+           [[w.id, w.visit.visit_date, w.created_by.display_name, w.store.chain, w.store.store_number, w.store.city,
+             w.brand, w.program.code if w.program else "", w.win_type, w.location, w.cases, w.facings, _yn(w.tracked),
+             w.status if w.tracked else "", w.last_checked, w.notes, len(w.photos)] for w in wins], {9: 34, 16: 40})
     issues = db.scalars(select(Issue).order_by(Issue.id)).all()
     _sheet(wb, "Follow-ups", ["ID", "Chain", "Store #", "Program ID", "Discrepancy", "Description", "Action", "Owner",
                               "Due", "Status", "Raised By", "Raised", "Resolved", "Last Update"],

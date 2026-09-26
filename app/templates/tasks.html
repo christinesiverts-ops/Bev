@@ -1,43 +1,49 @@
 {% extends "base.html" %}{% block title %}Tasks{% endblock %}
 {% block content %}
-<h1>{{ 'Tasks' if user.is_manager or user.role == 'viewer' else 'My tasks' }}</h1>
-<form class="filters" method="get">
-  <select name="status" data-autosubmit>{% for s_ in ['Open','Done',''] %}<option value="{{ s_ }}" {% if f.status == s_ %}selected{% endif %}>{{ s_ or 'All' }}</option>{% endfor %}</select>
+<div class="section-title flex-wrap"><h1 class="font-display text-3xl font-semibold">{{ 'Tasks' if user.is_manager or user.role == 'viewer' else 'My tasks' }}</h1></div>
+<form class="mb-5 flex flex-wrap gap-2" method="get">
+  <select class="input w-auto" name="status" data-autosubmit aria-label="Status">{% for s_ in ['Open','Done',''] %}<option value="{{ s_ }}" {% if f.status == s_ %}selected{% endif %}>{{ s_ or 'All' }}</option>{% endfor %}</select>
   {% if user.is_manager or user.role == 'viewer' %}
-  <select name="assignee" data-autosubmit><option value="">Everyone</option>
-    {% for u in team %}<option value="{{ u.id }}" {% if f.assignee == u.id %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select>{% endif %}
+  <select class="input w-auto" name="assignee" data-autosubmit aria-label="Person"><option value="">Everyone</option>{% for u in team %}<option value="{{ u.id }}" {% if f.assignee == u.id %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select>{% endif %}
 </form>
 
 {% if user.is_manager %}
-<details class="addbox"><summary class="btn">+ Assign a task</summary>
-<form method="post" action="/tasks" class="card formgrid">{{ csrf_field() }}
-  <label class="span2">Title <input name="title" required placeholder="e.g. Check WinCo Tier 2 displays"></label>
-  <label class="span2">Details <textarea name="description" rows="2"></textarea></label>
-  <label class="span2">Assign to (hold Ctrl/⌘ for several)
-    <select name="assignee_id" multiple size="5" required>{% for u in team %}<option value="{{ u.id }}">{{ u.display_name }}</option>{% endfor %}</select></label>
-  <label>Due <input type="date" name="due_date"></label>
-  <label>Program <select name="program_id"><option value="">—</option>{% for p in progs %}<option value="{{ p.id }}">{{ p.code }}</option>{% endfor %}</select></label>
-  <label class="span2">Store <select name="store_id"><option value="">—</option>{% for st in stores %}<option value="{{ st.id }}">{{ st.label }}</option>{% endfor %}</select></label>
-  <button class="btn primary">Assign</button>
+<details class="card-pad mb-5"><summary class="cursor-pointer font-semibold">+ Assign a task</summary>
+<form method="post" action="/tasks" class="mt-4">{{ csrf_field() }}
+  <label class="field"><span class="label">Title</span><input class="input" name="title" required placeholder="e.g. Check WinCo Tier 2 displays"></label>
+  <label class="field"><span class="label">Details</span><textarea class="input" name="description" rows="2"></textarea></label>
+  <p class="label">Assign to</p>
+  <div class="chips mb-4">{% for u in team %}<label><input type="checkbox" name="assignee_id" value="{{ u.id }}"><span>{{ u.display_name }}</span></label>{% endfor %}</div>
+  <div class="form-grid">
+    <label class="field"><span class="label">Due</span><input class="input" type="date" name="due_date"></label>
+    <label class="field"><span class="label">Program</span><select class="input" name="program_id"><option value="">—</option>{% for p in progs %}<option value="{{ p.id }}">{{ p.code }}</option>{% endfor %}</select></label>
+    <label class="field full"><span class="label">Store</span><select class="input" name="store_id"><option value="">—</option>{% for st in stores %}<option value="{{ st.id }}">{{ st.label }}</option>{% endfor %}</select></label>
+  </div>
+  <button class="btn btn-primary" data-loading="Assigning…">Assign</button>
 </form></details>
 {% endif %}
 
-<div class="table-wrap"><table class="data">
-  <thead><tr><th>Task</th><th>Assignee</th><th>Due</th><th>Store / program</th><th>Status</th><th></th></tr></thead>
-  <tbody>
-  {% for t_ in tasks %}
-  <tr class="{% if t_.status == 'Open' and t_.due_date and t_.due_date < t %}overdue{% endif %}">
-    <td><strong>{{ t_.title }}</strong>{% if t_.description %}<div class="small">{{ t_.description }}</div>{% endif %}
-      {% if t_.completion_note %}<div class="small muted">Done: {{ t_.completion_note }}</div>{% endif %}</td>
-    <td>{{ t_.assignee.display_name }}</td><td class="nowrap">{{ t_.due_date|d }}</td>
-    <td class="small">{% if t_.store %}<a href="/stores/{{ t_.store.id }}">{{ t_.store.label }}</a><br>{% endif %}{% if t_.program %}<a href="/plan/{{ t_.program.id }}">{{ t_.program.code }}</a>{% endif %}</td>
-    <td>{{ badge(t_.status) }}</td>
-    <td class="nowrap">{% if user.can_log_visits and (t_.assignee_id == user.id or user.is_manager) %}
-      <form method="post" action="/tasks/{{ t_.id }}/done" class="inline">{{ csrf_field() }}
-        {% if t_.status == 'Open' %}<input name="note" placeholder="Note" class="short">{% endif %}
-        <button class="btn small-btn">{{ 'Done' if t_.status == 'Open' else 'Reopen' }}</button></form>{% endif %}
-      {% if user.is_manager %}<form method="post" action="/tasks/{{ t_.id }}/delete" class="inline" data-confirm="Delete task?">{{ csrf_field() }}<button class="linkish danger small">Delete</button></form>{% endif %}</td>
-  </tr>
-  {% else %}<tr><td colspan="6" class="muted">No tasks.</td></tr>{% endfor %}
-  </tbody></table></div>
+{% if tasks %}
+<div class="space-y-3">
+{% for t_ in tasks %}
+{% set late = t_.status == 'Open' and t_.due_date and t_.due_date < t %}
+<div class="card flex flex-wrap items-start gap-3 border-l-4 p-4 {{ 'edge-danger' if late else 'edge-success' if t_.status == 'Done' else 'edge-muted' }}">
+  <div class="min-w-0 flex-1">
+    <div class="flex flex-wrap items-center gap-2">{{ badge(t_.status) }}<span class="font-semibold">{{ t_.title }}</span></div>
+    <p class="hint mt-0.5">{{ t_.assignee.display_name }}{% if t_.due_date %} · due <span class="{{ 'font-semibold text-danger' if late }}">{{ t_.due_date|d }}</span>{% endif %}
+      {% if t_.store %} · <a href="/stores/{{ t_.store.id }}">{{ t_.store.label }}</a>{% endif %}{% if t_.program %} · <a href="/plan/{{ t_.program.id }}">{{ t_.program.code }}</a>{% endif %}</p>
+    {% if t_.description %}<p class="mt-1 text-sm">{{ t_.description }}</p>{% endif %}
+    {% if t_.completion_note %}<p class="mt-1 text-sm text-success">✓ {{ t_.completion_note }}</p>{% endif %}
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    {% if user.can_log_visits and (t_.assignee_id == user.id or user.is_manager) %}
+    <form method="post" action="/tasks/{{ t_.id }}/done" class="flex gap-2">{{ csrf_field() }}
+      {% if t_.status == 'Open' %}<input class="input min-h-9 w-36 text-sm" name="note" placeholder="Note" aria-label="Note">{% endif %}
+      <button class="btn btn-sm">{{ icon('check', 'size-4') if t_.status == 'Open' }}{{ 'Done' if t_.status == 'Open' else 'Reopen' }}</button></form>{% endif %}
+    {% if user.is_manager %}<form method="post" action="/tasks/{{ t_.id }}/delete" data-confirm="Delete task?">{{ csrf_field() }}<button class="btn btn-danger btn-sm">Delete</button></form>{% endif %}
+  </div>
+</div>
+{% endfor %}
+</div>
+{% else %}{% call empty('No tasks', 'Tasks assigned by your manager show up here.', 'clipboard') %}{% endcall %}{% endif %}
 {% endblock %}

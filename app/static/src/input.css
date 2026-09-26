@@ -1,0 +1,184 @@
+@font-face{font-family:InterVariable;font-style:normal;font-weight:100 900;font-display:swap;src:url(/static/fonts/inter-var.woff2) format("woff2")}
+@font-face{font-family:FrauncesVariable;font-style:normal;font-weight:100 900;font-display:swap;src:url(/static/fonts/fraunces-var.woff2) format("woff2")}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- tokens: Ivory (field / light) ---------- */
+@layer base {
+  :root{
+    --background:247 244 238; --card:255 255 255; --raised:251 249 245; --foreground:28 25 23;
+    --muted:241 237 230; --muted-foreground:107 100 92; --border:231 225 216; --input:214 207 197;
+    --primary:110 30 46; --primary-text:110 30 46; --accent:183 121 31; --accent-text:138 90 18;
+    --success:31 122 77; --danger:185 58 18; --warning:138 90 10; --info:47 93 138;
+    color-scheme: light;
+  }
+  /* ---------- Cellar (manager / dark) ---------- */
+  :root[data-theme="dark"]{
+    --background:18 17 16; --card:28 26 24; --raised:36 33 30; --foreground:242 237 230;
+    --muted:44 40 36; --muted-foreground:163 155 145; --border:52 48 43; --input:74 68 61;
+    --primary:142 42 62; --primary-text:224 150 165; --accent:224 165 70; --accent-text:224 165 70;
+    --success:92 197 146; --danger:242 139 99; --warning:232 182 76; --info:125 170 220;
+    color-scheme: dark;
+  }
+  html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+  body{@apply bg-background text-foreground font-sans antialiased;font-feature-settings:"cv11","ss01"}
+  a{@apply text-primary-text underline-offset-2 hover:underline}
+  ::selection{background:rgb(var(--accent) / .3)}
+  :focus-visible{outline:2px solid rgb(var(--accent));outline-offset:2px;border-radius:6px}
+  h1{@apply text-2xl font-semibold tracking-tight}
+  h2{@apply text-lg font-semibold tracking-tight}
+  input,select,textarea{font-size:16px}
+  [hidden]{display:none!important}
+}
+
+@layer components {
+  /* layout */
+  .page{@apply mx-auto w-full max-w-6xl px-4 pb-28 pt-5 sm:px-6 lg:pb-12}
+  .page-narrow{@apply mx-auto w-full max-w-2xl px-4 pb-28 pt-5 sm:px-6 lg:pb-12}
+  .eyebrow{@apply text-[11px] font-semibold uppercase tracking-[.09em] text-muted-foreground}
+  .display-num{@apply font-display font-semibold tabular-nums tracking-tight}
+  .hint{@apply text-[13px] leading-snug text-muted-foreground}
+
+  /* surfaces */
+  .card{@apply rounded-2xl border border-border bg-card shadow-card}
+  .card-pad{@apply rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5}
+  .section-title{@apply mb-3 flex items-center justify-between gap-3}
+  .row-link{@apply flex items-center gap-3 rounded-xl px-3 py-3 text-foreground no-underline transition hover:bg-muted hover:no-underline}
+  .divide-rows > * + *{@apply border-t border-border}
+  .logo-plate{@apply grid shrink-0 place-items-center overflow-hidden rounded-xl bg-white p-1.5 ring-1 ring-black/5}
+  .logo-plate img{@apply max-h-full max-w-full object-contain}
+  .count{@apply inline-flex min-w-6 items-center justify-center rounded-full bg-muted px-2 text-xs font-semibold text-muted-foreground}
+
+  /* buttons */
+  .btn{@apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground no-underline shadow-sm transition duration-150 hover:bg-muted hover:no-underline active:scale-[.98] disabled:pointer-events-none disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100}
+  .btn-primary{@apply border-transparent bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground}
+  .btn-accent{@apply border-transparent bg-accent text-[#1C1917] hover:bg-accent/90}
+  .btn-ghost{@apply border-transparent bg-transparent shadow-none hover:bg-muted}
+  .btn-danger{@apply border-transparent bg-transparent text-danger shadow-none hover:bg-danger/10}
+  .btn-lg{@apply min-h-14 rounded-2xl px-6 text-base}
+  .btn-sm{@apply min-h-9 rounded-lg px-3 text-[13px]}
+  .btn-block{@apply w-full}
+  .linkish{@apply cursor-pointer border-0 bg-transparent p-0 text-sm font-semibold text-primary-text hover:underline}
+
+  /* forms */
+  .field{@apply mb-4 block}
+  .field > .label, .label{@apply mb-1.5 block text-[13px] font-semibold text-foreground}
+  .input{@apply block min-h-12 w-full rounded-xl border border-input bg-card px-3.5 text-base text-foreground placeholder:text-muted-foreground/70 shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40}
+  textarea.input{@apply min-h-24 py-3 leading-relaxed}
+  select.input{@apply appearance-none bg-[length:16px] bg-[right_.9rem_center] bg-no-repeat pr-10;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23948b80'%3E%3Cpath d='M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4z'/%3E%3C/svg%3E")}
+  .input-money{@apply pl-8 text-lg font-semibold tabular-nums}
+  input[type=file].input{@apply cursor-pointer border-dashed py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-foreground}
+  .form-grid{@apply grid gap-x-4 sm:grid-cols-2}
+  .form-grid > .full{@apply sm:col-span-2}
+
+  /* segmented yes/no */
+  .seg{@apply inline-flex rounded-xl border border-border bg-muted p-1}
+  .seg label{@apply cursor-pointer}
+  .seg input{@apply sr-only}
+  .seg span{@apply block min-w-[4.25rem] rounded-lg px-3.5 py-2.5 text-center text-sm font-semibold text-muted-foreground transition duration-150}
+  .seg input:checked + span{@apply bg-card text-foreground shadow-sm}
+  .seg input[value="Y"]:checked + span, .seg input[value="Yes"]:checked + span{@apply text-success}
+  .seg input[value="N"]:checked + span, .seg input[value="No"]:checked + span{@apply bg-danger/10 text-danger shadow-none}
+  .seg input:focus-visible + span{@apply ring-2 ring-accent}
+  .check-row{@apply flex items-center justify-between gap-3 py-2.5}
+
+  /* choice chips */
+  .chips{@apply flex flex-wrap gap-2}
+  .chips label{@apply cursor-pointer}
+  .chips input{@apply sr-only}
+  .chips span{@apply inline-flex min-h-10 items-center gap-1.5 rounded-full border border-border bg-card px-3.5 text-[13px] font-semibold text-foreground transition}
+  .chips input:checked + span{@apply border-primary bg-primary text-primary-foreground}
+  .chips input:focus-visible + span{@apply ring-2 ring-accent ring-offset-2 ring-offset-card}
+
+  /* pills / badges */
+  .pill{@apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold}
+  .pill-success{@apply bg-success/12 text-success}
+  .pill-danger{@apply bg-danger/12 text-danger}
+  .pill-warning{@apply bg-warning/15 text-warning}
+  .pill-info{@apply bg-info/12 text-info}
+  .pill-muted{@apply bg-muted text-muted-foreground}
+  .pill-accent{@apply bg-accent/15 text-accent-text}
+  .brand-chip{@apply inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white}
+  .brand-zoa{@apply bg-brand-zoa} .brand-henrys{@apply bg-brand-henrys} .brand-fever-tree{@apply bg-brand-fevertree} .brand-naked-life{@apply bg-brand-nakedlife}
+  .edge-zoa{@apply border-l-brand-zoa} .edge-henrys{@apply border-l-brand-henrys} .edge-fever-tree{@apply border-l-brand-fevertree} .edge-naked-life{@apply border-l-brand-nakedlife}
+
+  /* status edge for list rows */
+  .edge{@apply border-l-4}
+  .edge-danger{@apply border-l-danger} .edge-warning{@apply border-l-warning} .edge-success{@apply border-l-success} .edge-muted{@apply border-l-border}
+
+  /* data table */
+  .table-wrap{@apply overflow-x-auto rounded-2xl border border-border bg-card shadow-card}
+  .data{@apply w-full border-collapse text-sm}
+  .data th{@apply whitespace-nowrap border-b border-border bg-raised px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[.08em] text-muted-foreground}
+  .data td{@apply border-b border-border px-3.5 py-3 align-top}
+  .data tr:last-child td{@apply border-b-0}
+  .data tbody tr{@apply transition-colors hover:bg-raised}
+  .data .num{@apply text-right tabular-nums}
+  .data input.input, .data select.input{@apply min-h-9 py-1 text-sm}
+
+  /* KPI */
+  .kpi{@apply flex flex-col rounded-2xl border border-border bg-card p-4 text-foreground no-underline shadow-card transition hover:-translate-y-0.5 hover:no-underline hover:shadow-lift sm:p-5 motion-reduce:hover:translate-y-0}
+  .kpi .n{@apply display-num mt-1 text-3xl sm:text-4xl}
+
+  /* toasts */
+  .toast{@apply flex animate-rise items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-medium shadow-lift}
+  .toast-ok{@apply border-success/30 bg-card text-foreground}
+  .toast-warn{@apply border-warning/40 bg-card text-foreground}
+  .toast-bad{@apply border-danger/40 bg-card text-foreground}
+  .toast-info{@apply border-info/30 bg-card text-foreground}
+  .toast-win{@apply border-accent/50 bg-card text-foreground}
+
+  /* bars */
+  .bar{@apply h-2 overflow-hidden rounded-full bg-muted}
+  .bar > span{@apply block h-full rounded-full}
+
+  /* photo thumbs */
+  .thumb{@apply block size-20 overflow-hidden rounded-xl border border-border bg-muted sm:size-24}
+  .thumb img{@apply size-full object-cover}
+
+  /* nav */
+  .side-link{@apply flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground no-underline transition hover:bg-muted hover:text-foreground hover:no-underline}
+  .side-link.active{@apply bg-muted text-foreground}
+  .side-link svg{@apply size-[18px] shrink-0}
+  .tab{@apply flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-[11px] font-semibold text-muted-foreground no-underline hover:no-underline}
+  .tab.active{@apply text-primary-text}
+  .tab svg{@apply size-6}
+}
+
+@layer components {
+  [data-gps-status][data-state="ok"]{@apply font-semibold text-success}
+  [data-gps-status][data-state="warn"]{@apply text-warning}
+  .toast{transition:opacity .2s ease}
+}
+
+@layer utilities {
+  .bg-success\/12{background-color:rgb(var(--success) / .12)}
+  .bg-danger\/12{background-color:rgb(var(--danger) / .12)}
+  .bg-info\/12{background-color:rgb(var(--info) / .12)}
+  .safe-bottom{padding-bottom:max(.5rem, env(safe-area-inset-bottom))}
+}
+
+/* bar widths (set from data; CSP forbids inline styles) */
+.w-pct-0{width:0}
+.w-pct-5{width:5%}
+.w-pct-10{width:10%}
+.w-pct-15{width:15%}
+.w-pct-20{width:20%}
+.w-pct-25{width:25%}
+.w-pct-30{width:30%}
+.w-pct-35{width:35%}
+.w-pct-40{width:40%}
+.w-pct-45{width:45%}
+.w-pct-50{width:50%}
+.w-pct-55{width:55%}
+.w-pct-60{width:60%}
+.w-pct-65{width:65%}
+.w-pct-70{width:70%}
+.w-pct-75{width:75%}
+.w-pct-80{width:80%}
+.w-pct-85{width:85%}
+.w-pct-90{width:90%}
+.w-pct-95{width:95%}
+.w-pct-100{width:100%}

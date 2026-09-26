@@ -1,16 +1,20 @@
-{# expects `visits` list #}
+{# expects `visits` #}
+<ol class="relative space-y-5 border-l border-border pl-5">
 {% for v in visits %}
-<article class="history">
-  <header><a href="/visits/{{ v.id }}"><strong>{{ v.visit_date|d }}</strong></a> · {{ v.rep.display_name }}
-    <span class="small muted">{{ v.lines|length }} checks{% if v.photos %} · {{ v.photos|length }} photos{% endif %}</span></header>
-  {% if v.notes %}<p class="note">{{ v.notes }}</p>{% endif %}
+<li class="relative">
+  <span class="absolute -left-[1.6rem] top-1 size-3 rounded-full border-2 border-card bg-accent"></span>
+  <p class="text-sm"><a class="font-semibold" href="/visits/{{ v.id }}">{{ v.visit_date|d }}</a> <span class="text-muted-foreground">· {{ v.rep.display_name }} · {{ v.lines|length }} checks{% if v.wins %} · {{ v.wins|length }} wins{% endif %}</span></p>
+  {% if v.notes %}<p class="mt-1 font-display text-[15px] italic leading-snug">“{{ v.notes }}”</p>{% endif %}
   {% for l in v.lines %}
-  <div class="small line">
-    <strong>{{ l.program.brand }}</strong> {{ l.program.account }}{% if l.sku != 'All' %} ({{ l.sku }}){% endif %}:
-    {% if l.price_check %}{{ badge(l.price_check) }} {{ l.observed_price|money }}{% if l.expected_price is not none %} vs {{ l.expected_price|money }}{% endif %}{% endif %}
-    {% if l.discrepancy_type != 'None' %}<span class="badge bad">{{ l.discrepancy_type }}</span>{% endif %}
-    {% if l.notes %}<div class="note">{{ l.notes }}</div>{% endif %}
+  <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm">
+    <span class="font-semibold">{{ l.program.brand }}</span><span class="text-muted-foreground">{{ l.program.account }}{% if l.sku != 'All' %} · {{ l.sku }}{% endif %}</span>
+    {% if l.price_check %}{{ badge(l.price_check) }}{% endif %}
+    {% if l.observed_price is not none %}<span class="tabular-nums">{{ l.observed_price|money }}{% if l.expected_price is not none %} vs {{ l.expected_price|money }}{% endif %}</span>{% endif %}
+    {% if l.discrepancy_type != 'None' %}<span class="pill pill-danger">{{ l.discrepancy_type }}</span>{% endif %}
+    {% if l.notes %}<p class="w-full text-muted-foreground">{{ l.notes }}</p>{% endif %}
   </div>
   {% endfor %}
-</article>
-{% else %}<p class="muted">No visits logged here yet.</p>{% endfor %}
+  {% for w in v.wins %}<p class="mt-1.5 text-sm"><span class="pill pill-accent">{{ icon('trophy', 'size-3.5') }}Win</span> {{ w.brand }} · {{ w.win_type }}{% if w.location %} · {{ w.location }}{% endif %}</p>{% endfor %}
+</li>
+{% else %}<li class="hint">No visits logged here yet.</li>{% endfor %}
+</ol>

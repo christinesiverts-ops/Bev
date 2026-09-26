@@ -1,14 +1,16 @@
-{% extends "base.html" %}{% block title %}Import stores{% endblock %}{% block mainclass %}narrow{% endblock %}
+{% extends "base.html" %}{% block title %}Import stores{% endblock %}{% block main %}page-narrow{% endblock %}
 {% block content %}
-<h1>Import store list</h1>
-<div class="card">
-  <p>Upload a CSV or Excel file with a header row. Recognized columns:</p>
-  <p class="small"><code>Chain</code> (required, must match the plan), <code>Store #</code> (required), <code>Division</code>, <code>Name</code>, <code>Address</code>, <code>City</code>, <code>State</code>, <code>Zip</code>, <code>Market Unit</code>, <code>Lat</code>, <code>Lng</code></p>
-  <p class="small">Existing stores (same chain + store #) are updated; new ones are added. Lat/long lets the app flag check-ins made far from the store.</p>
-  <p><a href="/data/stores-template.csv">Download a template</a></p>
+<h1 class="mb-4">Import store list</h1>
+<div class="card-pad">
+  <p>Upload a CSV or Excel file with a header row.</p>
+  <ul class="my-3 space-y-1 text-sm">
+    <li><strong>Required:</strong> <code>Chain</code> (must match the plan) and <code>Store #</code></li>
+    <li><strong>Optional:</strong> <code>Division</code>, <code>Name</code>, <code>Address</code>, <code>City</code>, <code>State</code>, <code>Zip</code>, <code>Market Unit</code>, <code>Lat</code>, <code>Lng</code></li>
+  </ul>
+  <p class="hint mb-4">Existing stores (same chain + store #) are updated; new ones are added. Lat/long lets the app flag check-ins made away from the store.</p>
   <form method="post" enctype="multipart/form-data">{{ csrf_field() }}
-    <input type="file" name="file" accept=".csv,.xlsx" required>
-    <button class="btn primary">Import</button>
+    <label class="field"><span class="label">File</span><input class="input" type="file" name="file" accept=".csv,.xlsx" required></label>
+    <div class="flex flex-wrap items-center gap-3"><button class="btn btn-primary" data-loading="Importing…">Import</button><a class="text-sm font-semibold" href="/data/stores-template.csv">Download a template</a></div>
   </form>
 </div>
 {% endblock %}

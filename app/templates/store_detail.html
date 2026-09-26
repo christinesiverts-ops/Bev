@@ -1,29 +1,56 @@
-{% extends "base.html" %}{% from "macros.html" import plan_card %}{% block title %}{{ st.label }}{% endblock %}
+{% extends "base.html" %}{% block title %}{{ st.label }}{% endblock %}
 {% block content %}
-<div class="titlebar"><div><h1>{{ st.chain }} #{{ st.store_number }}</h1>
-  <p class="muted">{{ st.name }} {{ st.address }} {{ st.city }} {{ st.state }} {{ st.zip }}{% if st.division %} · {{ st.division }}{% endif %}{% if st.market_unit %} · {{ st.market_unit }}{% endif %}</p></div>
-  <div>{% if user.can_log_visits %}<a class="btn primary" href="/visits/new?store_id={{ st.id }}">Start visit here</a>{% endif %}
-  {% if user.is_manager %}<a class="btn" href="/stores/{{ st.id }}/edit">Edit</a>
-    <a class="btn" href="/issues/new?store_id={{ st.id }}">+ Follow-up</a>{% endif %}</div></div>
-{% if not st.verified %}<div class="flash warn">Added in the field by a rep; not yet verified by a manager.</div>{% endif %}
-
-<section class="card attention">
-  <h2>Open follow-ups <span class="count">{{ issues|length }}</span></h2>
-  {% for i in issues %}
-  <a class="item link {% if i.due_date and i.due_date < t %}overdue{% endif %}" href="/issues/{{ i.id }}">{{ badge(i.status) }} <strong>{{ i.discrepancy_type }}</strong>
-    {% if i.program %}· {{ i.program.brand }}{% endif %} · owner {{ i.owner.display_name if i.owner else '—' }}{% if i.due_date %} · due {{ i.due_date|d }}{% endif %}
-    <div class="small">{{ i.description }}</div></a>
-  {% else %}<p class="muted">None. 👍</p>{% endfor %}
+<section class="card mb-5 flex flex-wrap items-center gap-4 p-5">
+  {{ chain_mark(st.chain, 'h-16 w-28') }}
+  <div class="min-w-0 flex-1">
+    <h1 class="font-display text-3xl font-semibold leading-tight">{{ st.chain }} #{{ st.store_number }}</h1>
+    <p class="hint">{{ st.name }} {{ st.address }} {{ st.city }} {{ st.state }} {{ st.zip }}{% if st.division %} · {{ st.division }}{% endif %}{% if st.market_unit %} · {{ st.market_unit }}{% endif %}</p>
+    {% if not st.verified %}<p class="mt-2">{{ badge('Unverified') }} <span class="hint">Added by a rep in the field</span></p>{% endif %}
+  </div>
+  <div class="flex w-full flex-wrap gap-2 sm:w-auto">
+    {% if user.can_log_visits %}<a class="btn btn-primary btn-lg flex-1 sm:flex-none" href="/visits/new?store_id={{ st.id }}">{{ icon('pin') }}Check in here</a>{% endif %}
+    {% if user.is_manager %}<a class="btn" href="/stores/{{ st.id }}/edit">Edit</a><a class="btn" href="/issues/new?store_id={{ st.id }}">+ Follow-up</a>{% endif %}
+  </div>
 </section>
 
-<h2>What the shelf should look like today</h2>
-{% if not cards %}<p class="muted">No active programs for chain "{{ st.chain }}"{% if st.division %} / division "{{ st.division }}"{% endif %}. Check the chain name matches the plan.</p>{% endif %}
-<div class="cards">{% for c in cards %}{{ plan_card(c) }}{% endfor %}</div>
-{% if other %}<details><summary class="small">Other {{ st.chain }} programs (other divisions): {{ other|length }}</summary>
-  <ul class="small">{% for p in other %}<li><a href="/plan/{{ p.id }}">{{ p.code }}</a></li>{% endfor %}</ul></details>{% endif %}
+<div class="grid gap-5 lg:grid-cols-[1fr_22rem]">
+  <div class="min-w-0 space-y-5">
+    {% if issues %}
+    <section class="card border-l-4 border-l-danger p-4">
+      <h2 class="mb-2">Open follow-ups <span class="count">{{ issues|length }}</span></h2>
+      <div class="divide-rows">
+      {% for i in issues %}
+      <a class="block py-3 text-foreground no-underline hover:no-underline" href="/issues/{{ i.id }}">
+        <span class="flex flex-wrap items-center gap-2">{{ badge(i.status) }}<span class="font-semibold">{{ i.discrepancy_type }}</span>
+          <span class="hint">{% if i.program %}{{ i.program.brand }} · {% endif %}{{ i.owner.display_name if i.owner else '—' }}{% if i.due_date %} · due <span class="{{ 'font-semibold text-danger' if i.due_date < t }}">{{ i.due_date|d }}</span>{% endif %}</span></span>
+        <span class="mt-1 block text-sm">{{ i.description }}</span></a>
+      {% endfor %}
+      </div>
+    </section>
+    {% endif %}
 
-<section class="card">
-  <h2>Visit history &amp; notes</h2>
-  {% include "_visit_history.html" %}
-</section>
+    <section>
+      <div class="section-title"><h2>What the shelf should look like today</h2></div>
+      {% if not cards %}{% call empty('No programs for this store', 'The chain "' ~ st.chain ~ '" doesn\'t match any active program. Check the chain name.', 'alert') %}{% endcall %}{% endif %}
+      <div class="grid gap-4 xl:grid-cols-2">{% for c in cards %}{{ plan_card(c) }}{% endfor %}</div>
+      {% if other %}<details class="mt-3 text-sm"><summary class="cursor-pointer font-semibold">Other {{ st.chain }} divisions ({{ other|length }})</summary>
+        <ul class="mt-2 space-y-1">{% for p in other %}<li><a href="/plan/{{ p.id }}">{{ p.code }}</a></li>{% endfor %}</ul></details>{% endif %}
+    </section>
+  </div>
+
+  <aside class="space-y-5">
+    <section class="card-pad">
+      <div class="section-title"><h2>Displays &amp; placements</h2></div>
+      {% set live = placements|selectattr('status', 'equalto', 'Active')|list %}
+      {% set gone = placements|selectattr('status', 'equalto', 'Gone')|list %}
+      {% if not placements %}<p class="hint">No displays or placements logged yet. Log them as wins during a visit.</p>{% endif %}
+      <div class="divide-rows">{% for w in live %}{{ win_row(w) }}{% endfor %}</div>
+      {% if gone %}<details class="mt-2"><summary class="cursor-pointer text-sm font-semibold text-muted-foreground">Gone ({{ gone|length }})</summary><div class="divide-rows opacity-70">{% for w in gone %}{{ win_row(w) }}{% endfor %}</div></details>{% endif %}
+    </section>
+    <section class="card-pad">
+      <div class="section-title"><h2>Visit history</h2></div>
+      {% include "_visit_history.html" %}
+    </section>
+  </aside>
+</div>
 {% endblock %}

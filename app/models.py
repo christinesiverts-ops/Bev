@@ -28,8 +28,20 @@ class User(Base):
     failed_logins: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     session_version: Mapped[int] = mapped_column(Integer, default=1)
+    theme: Mapped[str] = mapped_column(String(8), default="auto")   # auto | light | dark
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     last_login: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    @property
+    def effective_theme(self) -> str:
+        if self.theme in ("light", "dark"):
+            return self.theme
+        return "dark" if self.role == "manager" else "light"   # reps work in bright stores
+
+    @property
+    def initials(self) -> str:
+        parts = [p for p in self.display_name.split() if p]
+        return ("".join(p[0] for p in parts[:2]) or self.username[:2]).upper()
 
     @property
     def is_manager(self) -> bool:
@@ -132,6 +144,7 @@ class Visit(Base):
     lines: Mapped[list["AuditLine"]] = relationship(back_populates="visit", cascade="all, delete-orphan",
                                                     order_by="AuditLine.id")
     photos: Mapped[list["Photo"]] = relationship(back_populates="visit", cascade="all, delete-orphan")
+    wins: Mapped[list["Win"]] = relationship(back_populates="visit", cascade="all, delete-orphan", order_by="Win.id")
 
 
 class AuditLine(Base):
@@ -163,12 +176,14 @@ class Photo(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     visit_id: Mapped[int] = mapped_column(ForeignKey("visits.id", ondelete="CASCADE"), index=True)
     audit_line_id: Mapped[int | None] = mapped_column(ForeignKey("audit_lines.id", ondelete="SET NULL"), nullable=True)
+    win_id: Mapped[int | None] = mapped_column(ForeignKey("wins.id", ondelete="SET NULL"), nullable=True)
     filename: Mapped[str] = mapped_column(String(80), unique=True)
     uploaded_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     visit: Mapped[Visit] = relationship(back_populates="photos")
     line: Mapped[AuditLine | None] = relationship(back_populates="photos")
+    win: Mapped["Win | None"] = relationship(back_populates="photos")
 
 
 class Issue(Base):
@@ -253,3 +268,69 @@ class AuditLog(Base):
     at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
 
     user: Mapped[User | None] = relationship()
+
+
+# Wins: what the rep gained or protected at the store. Placement-type wins are re-checked on later visits.
+WIN_TYPES = [
+    # (value, tracked placement?)
+    ("New display", True),
+    ("Cold placement (cooler / cold vault)", True),
+    ("New shelf placement (SKU gained)", True),
+    ("Secondary placement (endcap, wing, checkout)", True),
+    ("Display rebuilt / refreshed", True),
+    ("Placement restored", True),
+    ("Ad / feature secured", False),
+    ("Price or tag corrected", False),
+    ("Other win", False),
+]
+TRACKED_WIN_TYPES = {t for t, tracked in WIN_TYPES if tracked}
+WIN_LOCATIONS = ["Cold vault / cooler door", "Endcap", "Front lobby / entrance", "Wing / side stack",
+                 "Aisle / shelf", "Checkout", "Other"]
+
+
+class Win(Base):
+    __tablename__ = "wins"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    visit_id: Mapped[int] = mapped_column(ForeignKey("visits.id", ondelete="CASCADE"), index=True)
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), index=True)
+    program_id: Mapped[int | None] = mapped_column(ForeignKey("programs.id"), nullable=True, index=True)
+    brand: Mapped[str] = mapped_column(String(40), index=True)
+    win_type: Mapped[str] = mapped_column(String(80), index=True)
+    location: Mapped[str] = mapped_column(String(60), default="")
+    cases: Mapped[int | None] = mapped_column(Integer, nullable=True)      # cases on display
+    facings: Mapped[int | None] = mapped_column(Integer, nullable=True)    # facings / doors / SKUs gained
+    notes: Mapped[str] = mapped_column(Text, default="")
+    tracked: Mapped[bool] = mapped_column(Boolean, default=False)          # re-check on later visits
+    status: Mapped[str] = mapped_column(String(12), default="Active")      # Active | Gone
+    last_checked: Mapped[date | None] = mapped_column(Date, nullable=True)
+    created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    visit: Mapped[Visit] = relationship(back_populates="wins")
+    store: Mapped[Store] = relationship()
+    program: Mapped[Program | None] = relationship()
+    created_by: Mapped[User] = relationship()
+    photos: Mapped[list["Photo"]] = relationship(back_populates="win")
+    checks: Mapped[list["WinCheck"]] = relationship(back_populates="win", cascade="all, delete-orphan",
+                                                    order_by="WinCheck.created_at")
+
+
+class WinCheck(Base):
+    """A later visit confirming a display / placement is still up (or gone)."""
+    __tablename__ = "win_checks"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    win_id: Mapped[int] = mapped_column(ForeignKey("wins.id", ondelete="CASCADE"), index=True)
+    visit_id: Mapped[int | None] = mapped_column(ForeignKey("visits.id", ondelete="SET NULL"), nullable=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    status: Mapped[str] = mapped_column(String(12))
+    note: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    win: Mapped[Win] = relationship(back_populates="checks")
+    user: Mapped[User] = relationship()
+
+
+class Setting(Base):
+    __tablename__ = "settings"
+    key: Mapped[str] = mapped_column(String(80), primary_key=True)
+    value: Mapped[str] = mapped_column(Text, default="")

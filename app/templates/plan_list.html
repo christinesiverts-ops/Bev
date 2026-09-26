@@ -1,37 +1,31 @@
-{% extends "base.html" %}{% block title %}Plan{% endblock %}
+{% extends "base.html" %}{% block title %}Programs{% endblock %}
 {% block content %}
-<div class="titlebar"><h1>Chain program plan</h1>
-  {% if user.is_manager %}<a class="btn" href="/plan/new">+ Program</a>{% endif %}</div>
-<form class="filters" method="get">
-  <input name="q" value="{{ f.q }}" placeholder="Search account, market, callout">
-  <select name="brand" data-autosubmit><option value="">All brands</option>
-    {% for b in brands %}<option {% if f.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}</select>
-  <select name="chain" data-autosubmit><option value="">All chains</option>
-    {% for c in chains %}<option {% if f.chain == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
-  <select name="status" data-autosubmit><option value="">Any data status</option>
-    {% for s_ in statuses %}<option {% if f.status == s_ %}selected{% endif %}>{{ s_ }}</option>{% endfor %}</select>
+<div class="section-title flex-wrap"><div><h1 class="font-display text-3xl font-semibold">Programs</h1>
+  <p class="hint">{{ rows|length }} brand × account programs · expected price for today ({{ today()|d }})</p></div>
+  {% if user.is_manager %}<a class="btn btn-primary" href="/plan/new">{{ icon('plus', 'size-4') }}New program</a>{% endif %}</div>
+<form class="mb-5 flex flex-wrap gap-2" method="get">
+  <div class="relative min-w-56 flex-1"><span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">{{ icon('search') }}</span>
+    <input class="input pl-11" name="q" value="{{ f.q }}" placeholder="Search account, market, callout" aria-label="Search"></div>
+  <select class="input w-auto" name="brand" data-autosubmit aria-label="Brand"><option value="">All brands</option>{% for b in brands %}<option {% if f.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}</select>
+  <select class="input w-auto" name="chain" data-autosubmit aria-label="Chain"><option value="">All chains</option>{% for c in chains %}<option {% if f.chain == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+  <select class="input w-auto" name="status" data-autosubmit aria-label="Data status"><option value="">Any data status</option>{% for s_ in statuses %}<option {% if f.status == s_ %}selected{% endif %}>{{ s_ }}</option>{% endfor %}</select>
   <button class="btn">Filter</button>
 </form>
-<p class="muted small">{{ rows|length }} programs · expected price is for today ({{ today()|d }}), SKU "All".</p>
-<div class="table-wrap">
-<table class="data">
-  <thead><tr><th>Brand</th><th>Chain</th><th>Account / Division</th><th>Market</th><th class="num">Outlets</th>
-    <th>Current promo</th><th class="num">Expected today</th><th>Next promo</th><th>Data</th></tr></thead>
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>Program</th><th>Market</th><th class="num">Outlets</th><th>Current promo</th><th class="num">Should be</th><th>Next promo</th><th>Data</th></tr></thead>
   <tbody>
   {% for r in rows %}
   <tr>
-    <td><span class="brand-chip brand-{{ r.p.brand|lower|replace("'", '')|replace(' ', '-') }}">{{ r.p.brand }}</span></td>
-    <td>{{ r.p.chain }}</td>
-    <td><a href="/plan/{{ r.p.id }}">{{ r.p.account }}</a></td>
-    <td class="small">{{ r.p.market }}</td>
+    <td><a class="flex items-center gap-3 text-foreground no-underline hover:no-underline" href="/plan/{{ r.p.id }}">{{ chain_mark(r.p.chain, 'h-8 w-12') }}
+      <span><span class="block font-semibold">{{ r.p.account }}</span><span class="mt-0.5 inline-block">{{ brand_chip(r.p.brand) }}</span></span></a></td>
+    <td class="text-muted-foreground">{{ r.p.market }}</td>
     <td class="num">{{ r.p.total_outlets or '' }}</td>
-    <td class="small">{{ r.offer }}</td>
-    <td class="num">{% if r.expected.price is not none %}{{ r.expected.price|money }}{% else %}<span class="muted">Not set</span>{% endif %}</td>
-    <td class="small">{{ r.next|d }}</td>
+    <td>{{ r.offer }}</td>
+    <td class="num display-num text-base">{% if r.expected.price is not none %}{{ r.expected.price|money }}{% else %}<span class="text-sm font-normal text-muted-foreground">Not set</span>{% endif %}</td>
+    <td class="whitespace-nowrap">{{ r.next|d }}</td>
     <td>{{ badge(r.p.data_status) }}</td>
   </tr>
-  {% endfor %}
+  {% else %}<tr><td colspan="7" class="text-muted-foreground">No programs match.</td></tr>{% endfor %}
   </tbody>
-</table>
-</div>
+</table></div>
 {% endblock %}

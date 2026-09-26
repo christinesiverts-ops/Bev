@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from .. import config, pricing
 from ..common import flash, opt_date, opt_float, opt_int, redirect, render, s, today, yn
 from ..db import get_db
-from ..models import DISPLAY_CHOICES, AuditLine, Issue, IssueUpdate, Photo, Program, Store, User, Visit
+from ..models import DISPLAY_CHOICES, WIN_LOCATIONS, WIN_TYPES, AuditLine, Issue, IssueUpdate, Photo, Program, Store, User, Visit
 from ..photos import save_upload, uploads_from
 from ..security import csrf_protect, current_user, log, require_field
 from ..seed import lists
@@ -101,8 +101,16 @@ def visit_detail(vid: int, request: Request, user: User = Depends(current_user),
     plan_json = {}
     for p in matched + other:
         plan_json[p.id] = {sku: _exp_dict(pricing.expected_price(p, sku, day)) for sku in L["skus"]}
+    from .wins import placements_at_store
+    checked = {}
+    for l in v.lines:
+        checked.setdefault(l.program_id, []).append(l)
+    for c in cards:
+        c["lines"] = checked.get(c["p"].id, [])
     return render(request, "visit_detail.html", user=user, v=v, cards=cards, other=other, prev=prev, issues=issues,
-                  plan_json=plan_json, matched=matched,
+                  plan_json=plan_json, matched=matched, placements=placements_at_store(db, v.store_id, v.id),
+                  win_types=WIN_TYPES, win_locations=WIN_LOCATIONS, brands=L["brands"],
+                  other_lines=[l for l in v.lines if l.program_id not in {c["p"].id for c in cards}],
                   editable=can_edit_visit(user, v), skus=L["skus"], dtypes=L["discrepancy_types"],
                   display_choices=DISPLAY_CHOICES, team=_team(db), default_due=today() + timedelta(days=7),
                   gps_flag=config.GPS_FLAG_METERS)

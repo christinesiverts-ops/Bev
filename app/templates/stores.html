@@ -1,26 +1,31 @@
 {% extends "base.html" %}{% block title %}Stores{% endblock %}
 {% block content %}
-<div class="titlebar"><h1>Stores</h1>
-  <div>{% if user.can_log_visits %}<a class="btn" href="/stores/new">+ Store</a>{% endif %}
-  {% if user.is_manager %}<a class="btn" href="/stores/import">Import list</a>{% endif %}</div></div>
-<form class="filters" method="get">
-  <input name="q" value="{{ f.q }}" placeholder="Store #, city, name" autofocus>
-  <select name="chain" data-autosubmit><option value="">All chains</option>
+<div class="section-title flex-wrap"><h1 class="font-display text-3xl font-semibold">Stores</h1>
+  <div class="flex gap-2">{% if user.can_log_visits %}<a class="btn btn-sm" href="/stores/new">{{ icon('plus', 'size-4') }}Add store</a>{% endif %}
+  {% if user.is_manager %}<a class="btn btn-sm" href="/stores/import">Import list</a>{% endif %}</div></div>
+<form class="mb-5 flex flex-wrap gap-2" method="get">
+  <div class="relative min-w-56 flex-1"><span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">{{ icon('search') }}</span>
+    <input class="input pl-11" name="q" value="{{ f.q }}" placeholder="Store #, city, name" aria-label="Search stores"></div>
+  <select class="input w-auto min-w-44" name="chain" data-autosubmit aria-label="Chain"><option value="">All chains</option>
     {% for c in chains %}<option {% if f.chain == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
   <button class="btn">Search</button>
 </form>
 {% if not stores %}
-<div class="card"><p>No stores {% if f.q or f.chain %}match{% else %}loaded yet{% endif %}.</p>
-  {% if user.is_manager and not (f.q or f.chain) %}<p>Import your store list (CSV or Excel) from <a href="/stores/import">Import list</a>.</p>{% endif %}
-  {% if user.can_log_visits %}<p>You can also <a href="/stores/new">add a store</a> you're standing in.</p>{% endif %}</div>
+  {% if f.q or f.chain %}{% call empty('No stores match', 'Try a different store number, city or chain.', 'search') %}{% endcall %}
+  {% else %}{% call empty('No stores yet', 'Import your store list, or add the store you\'re standing in.', 'store') %}
+    <div class="mt-4 flex gap-2">{% if user.is_manager %}<a class="btn btn-primary" href="/stores/import">Import list</a>{% endif %}{% if user.can_log_visits %}<a class="btn" href="/stores/new">Add store</a>{% endif %}</div>{% endcall %}{% endif %}
 {% endif %}
-<div class="list">
+<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
 {% for st in stores %}
-<a class="item link" href="/stores/{{ st.id }}">
-  <strong>{{ st.chain }} #{{ st.store_number }}</strong> {% if not st.verified %}{{ badge('Unverified') }}{% endif %}
-  {% if opened.get(st.id) %}<span class="badge bad">{{ opened[st.id] }} open</span>{% endif %}
-  <div class="small">{{ st.name }} {{ st.address }} {{ st.city }} {{ st.state }}</div>
-  <div class="small muted">{% if last.get(st.id) %}Last visit {{ last[st.id]|d }}{% else %}Never visited{% endif %}</div>
+<a class="card flex items-center gap-3 p-3.5 text-foreground no-underline transition hover:-translate-y-0.5 hover:shadow-lift hover:no-underline motion-reduce:hover:translate-y-0" href="/stores/{{ st.id }}">
+  {{ chain_mark(st.chain, 'h-12 w-20') }}
+  <span class="min-w-0 flex-1">
+    <span class="flex items-center gap-2"><span class="truncate font-semibold">{{ st.chain }} #{{ st.store_number }}</span>{% if not st.verified %}{{ badge('Unverified') }}{% endif %}</span>
+    <span class="hint block truncate">{{ st.address }} {{ st.city }} {{ st.state }}</span>
+    <span class="mt-1 flex flex-wrap items-center gap-2 text-xs">
+      {% if last.get(st.id) %}<span class="text-muted-foreground">Visited {{ last[st.id]|d }}</span>{% else %}<span class="font-semibold text-warning">Never visited</span>{% endif %}
+      {% if opened.get(st.id) %}<span class="pill pill-danger">{{ opened[st.id] }} open</span>{% endif %}</span>
+  </span>
 </a>
 {% endfor %}
 </div>

@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from . import config
+from . import branding
 from .security import csrf_token
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
@@ -34,6 +35,19 @@ templates.env.filters["money"] = money
 templates.env.filters["d"] = fmt_date
 templates.env.filters["local"] = local_dt
 templates.env.globals["today"] = today
+def greeting() -> str:
+    h = datetime.now(config.TIMEZONE).hour
+    return "Good morning" if h < 12 else "Good afternoon" if h < 17 else "Good evening"
+
+
+templates.env.globals["greeting"] = greeting
+templates.env.globals["site"] = branding.site
+templates.env.globals["brand_color"] = lambda b: branding.BRAND_COLORS.get(b, "#4A5563")
+templates.env.globals["brand_logo"] = lambda b: branding.logo_url("brands", branding.brand_slug(b))
+templates.env.globals["product_img"] = lambda b: branding.logo_url("products", branding.brand_slug(b))
+templates.env.globals["chain_logo"] = lambda c: branding.logo_url("chains", branding.chain_slug(c))
+templates.env.globals["company_logo"] = lambda: branding.logo_url("company", "logo")
+templates.env.globals["brand_slug"] = branding.brand_slug
 
 
 def flash(request: Request, message: str, kind: str = "ok") -> None:

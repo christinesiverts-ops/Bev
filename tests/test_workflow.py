@@ -142,14 +142,14 @@ def test_division_narrows_programs(manager):
     sid = add_store(manager, chain="Albertsons/Safeway", number="1234", division="Seattle Div. #27")
     page = manager.get(f"/stores/{sid}").text
     assert "Seattle Div. #27" in page
-    assert "Other Albertsons/Safeway programs" in page
+    assert "Other Albertsons/Safeway divisions" in page
 
 
 def test_admin_creates_user_with_temp_password(manager, other):
     r = post(manager, "/admin/users", {"display_name": "Pat Rep", "username": "prep", "role": "rep"}, page="/admin/users")
     assert r.status_code == 303
     page = manager.get("/admin/users").text
-    temp = re.search(r'class="big-code">([^<]+)<', page).group(1)
+    temp = re.search(r'class="big-code[^"]*">([^<]+)<', page).group(1)
     assert "big-code" not in manager.get("/admin/users").text   # shown once
     r = login(other, "prep", temp)
     assert r.headers["location"] == "/account/password"
@@ -195,7 +195,8 @@ def test_all_pages_render(manager):
                  "/calendar?status=Expired", "/data-review", "/stores", f"/stores/{sid}", f"/stores/{sid}/edit",
                  "/stores/import", "/visits/new", "/visits/new?q=fresno", f"/visits/{vid}", f"/lines/{lid}/edit",
                  "/visits", "/issues", "/issues?status=all&overdue=1", f"/issues/{iid}", "/issues/new", "/tasks",
-                 "/dashboard", "/dashboard?days=7", "/admin/users", "/admin/log", "/data", "/account/password"):
+                 "/dashboard", "/dashboard?days=7", "/admin/users", "/admin/log", "/data", "/account/password",
+                 "/wins", "/wins?days=365&status=Active", "/admin/branding", "/theme.css"):
         r = manager.get(path)
         assert r.status_code == 200, (path, r.status_code, r.text[:300])
 

@@ -1,16 +1,31 @@
-{% extends "base.html" %}{% block title %}Sign in{% endblock %}{% block mainclass %}narrow center{% endblock %}
+{% extends "base.html" %}{% block title %}Sign in{% endblock %}{% block main %}min-h-screen{% endblock %}
 {% block content %}
-<div class="card login">
-  <h1>Chain Audit</h1>
-  <p class="muted">Pricing, placement &amp; display compliance</p>
-  {% if error %}<div class="flash bad" role="alert">{{ error }}</div>{% endif %}
-  <form method="post" action="/login">
-    {{ csrf_field() }}
-    <input type="hidden" name="next" value="{{ next }}">
-    <label>Username <input name="username" autocomplete="username" autocapitalize="none" required autofocus></label>
-    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
-    <button class="btn primary block">Sign in</button>
-  </form>
-  <p class="small muted">Forgot your password? Ask your manager to reset it.</p>
+<div class="grid min-h-screen lg:grid-cols-2">
+  <div class="flex items-center justify-center px-6 py-12">
+    <div class="w-full max-w-sm animate-rise">
+      {% if company_logo() %}<span class="logo-plate mb-6 h-14 w-28"><img src="{{ company_logo() }}" alt="{{ site().company_name }}"></span>
+      {% else %}<span class="mb-6 grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground">{{ icon('check', 'size-6') }}</span>{% endif %}
+      <h1 class="font-display text-4xl font-semibold">{{ site().company_name }}</h1>
+      <p class="mt-2 text-muted-foreground">Pricing, placement and display execution. Sign in to start your route.</p>
+      {% if error %}<div class="toast toast-bad mt-6" role="alert"><span class="text-danger">{{ icon('alert') }}</span><span>{{ error }}</span></div>{% endif %}
+      <form method="post" action="/login" class="mt-8">
+        {{ csrf_field() }}<input type="hidden" name="next" value="{{ next }}">
+        <label class="field"><span class="label">Username</span><input class="input" name="username" autocomplete="username" autocapitalize="none" required autofocus></label>
+        <label class="field"><span class="label">Password</span><input class="input" name="password" type="password" autocomplete="current-password" required></label>
+        <button class="btn btn-primary btn-lg btn-block mt-2" data-loading="Signing in…">Sign in</button>
+      </form>
+      <p class="hint mt-6">Forgot your password? Your manager can reset it from Team &amp; access.</p>
+    </div>
+  </div>
+  <div class="relative hidden overflow-hidden bg-[#121110] lg:block">
+    <div class="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-1 opacity-90">
+      {% for b in ['ZOA', "Henry's", 'Fever-Tree', 'Naked Life'] %}{% if product_img(b) %}<img class="size-full object-cover" src="{{ product_img(b) }}" alt="">{% endif %}{% endfor %}
+    </div>
+    <div class="absolute inset-0 bg-gradient-to-t from-[#121110] via-[#121110]/40 to-transparent"></div>
+    <div class="absolute inset-x-10 bottom-10 text-[#F2EDE6]">
+      <p class="text-[11px] font-semibold uppercase tracking-[.09em] text-[#E0A546]">Field execution</p>
+      <p class="mt-2 font-display text-3xl font-semibold leading-tight">Right price. Right shelf.<br>Every store, every visit.</p>
+    </div>
+  </div>
 </div>
 {% endblock %}

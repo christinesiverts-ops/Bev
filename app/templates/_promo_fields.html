@@ -1,14 +1,16 @@
-<label>SKU / pack
-  <select name="sku">{% for k in skus %}<option {% if pr and pr.sku == k %}selected{% endif %}>{{ k }}</option>{% endfor %}</select></label>
-<label>Offer type <input name="offer_type" value="{{ pr.offer_type if pr else 'TPR' }}" list="offer-types">
+<div class="form-grid">
+<label class="field"><span class="label">SKU / pack</span>
+  <select class="input" name="sku">{% for k in skus %}<option {% if pr and pr.sku == k %}selected{% endif %}>{{ k }}</option>{% endfor %}</select></label>
+<label class="field"><span class="label">Offer type</span><input class="input" name="offer_type" value="{{ pr.offer_type if pr else 'TPR' }}" list="offer-types">
   <datalist id="offer-types"><option>TPR</option><option>Deep TPR</option><option>TPR + Display</option><option>EDLP</option>
     <option>Case Cost</option><option>Frontline TPR</option><option>Feature TPR</option><option>Scan</option></datalist></label>
-<label class="span2">Offer (what the shelf/ad says) <input name="offer" value="{{ pr.offer if pr else '' }}" required placeholder="e.g. 2 for $4"></label>
-<label>Unit retail ($) <input name="unit_retail" inputmode="decimal" value="{{ pr.unit_retail if pr and pr.unit_retail is not none else '' }}" placeholder="shelf price per unit"></label>
-<label>Case cost ($) <input name="case_cost" inputmode="decimal" value="{{ pr.case_cost if pr and pr.case_cost is not none else '' }}"></label>
-<label>Start <input type="date" name="start" value="{{ pr.start.isoformat() if pr else '' }}" required></label>
-<label>End <input type="date" name="end" value="{{ pr.end.isoformat() if pr else '' }}" required></label>
-<label>Display required <select name="display_required"><option value="N">No</option>
+<label class="field full"><span class="label">Offer (what the shelf or ad says)</span><input class="input" name="offer" value="{{ pr.offer if pr else '' }}" required placeholder="e.g. 2 for $4"></label>
+<label class="field"><span class="label">Unit retail ($)</span><input class="input" name="unit_retail" inputmode="decimal" value="{{ pr.unit_retail if pr and pr.unit_retail is not none else '' }}" placeholder="Shelf price per unit"></label>
+<label class="field"><span class="label">Case cost ($)</span><input class="input" name="case_cost" inputmode="decimal" value="{{ pr.case_cost if pr and pr.case_cost is not none else '' }}"></label>
+<label class="field"><span class="label">Start</span><input class="input" type="date" name="start" value="{{ pr.start.isoformat() if pr else '' }}" required></label>
+<label class="field"><span class="label">End</span><input class="input" type="date" name="end" value="{{ pr.end.isoformat() if pr else '' }}" required></label>
+<label class="field"><span class="label">Display required</span><select class="input" name="display_required"><option value="N">No</option>
   <option value="Y" {% if pr and pr.display_required %}selected{% endif %}>Yes</option></select></label>
-<label>Source <input name="source" value="{{ pr.source if pr else '' }}" placeholder="e.g. Non-Alc Chain 9/8/26"></label>
-<p class="hint span2">Unit retail sets the expected shelf price while the window is active. Leave it blank for case-cost-only windows.</p>
+<label class="field"><span class="label">Source</span><input class="input" name="source" value="{{ pr.source if pr else '' }}" placeholder="e.g. Non-Alc Chain 9/8/26"></label>
+</div>
+<p class="hint mb-4">Unit retail sets the expected shelf price while the window is active. Leave it blank for case-cost-only windows.</p>

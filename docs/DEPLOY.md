@@ -59,7 +59,8 @@ Then run `sudo nginx -t && sudo systemctl reload nginx`. If port 8000 is already
 
    The app shows a temporary password once. Send it to the person privately; they must change it at first sign-in.
 3. Go to **Stores → Import list** and upload your store list as CSV or Excel. **Data → CSV template** shows the columns. `Chain` must match the plan's chain names. Latitude and longitude are optional, but they turn on the "checked in far from the store" flag.
-4. Work through **Data review**. As you confirm 2026 pricing, edit the programs and promo windows in the app, or re-import `Chain_Audit_Tool.xlsx` under **Data → Import plan**.
+4. Open **Branding**: set your company name and colors, and upload your company logo plus ZOA and Naked Life logos. The ZOA and Naked Life logos aren't in the source documents, so both brands show text marks until you upload them.
+5. Work through **Data review**. As you confirm 2026 pricing, edit the programs and promo windows in the app, or re-import `Chain_Audit_Tool.xlsx` under **Data → Import plan**.
 
 Reps can add the site to their phone's home screen, where it opens like an app. On iPhone, use Share → Add to Home Screen; on Android, use ⋮ → Add to Home screen.
 

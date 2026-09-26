@@ -1,34 +1,44 @@
-{% extends "base.html" %}{% block title %}Users{% endblock %}
+{% extends "base.html" %}{% block title %}Team & access{% endblock %}
 {% block content %}
-<h1>Team &amp; access</h1>
+<div class="section-title flex-wrap"><h1 class="font-display text-3xl font-semibold">Team &amp; access</h1></div>
 {% if new_pw %}
-<div class="flash warn" role="alert"><strong>Temporary password for {{ new_pw[0] }}</strong> (username <code>{{ new_pw[1] }}</code>):
-  <code class="big-code">{{ new_pw[2] }}</code><br>Copy it now and give it to them privately. It won't be shown again. They must change it at first sign-in.</div>
+<div class="card mb-5 border-accent/60 p-5" role="alert">
+  <p class="eyebrow">Temporary password for {{ new_pw[0] }}</p>
+  <p class="mt-1 text-sm">Username <code class="rounded bg-muted px-1.5 py-0.5">{{ new_pw[1] }}</code></p>
+  <p class="big-code my-3 select-all rounded-xl bg-muted px-4 py-3 font-mono text-2xl font-semibold tracking-wide">{{ new_pw[2] }}</p>
+  <p class="hint">Copy it now and send it privately. It won't be shown again, and they'll choose their own password at first sign-in.</p>
+</div>
 {% endif %}
-<details class="addbox" {% if people|length < 2 %}open{% endif %}><summary class="btn">+ Add a person</summary>
-<form method="post" action="/admin/users" class="card formgrid">{{ csrf_field() }}
-  <label>Full name <input name="display_name" required></label>
-  <label>Username <input name="username" required autocapitalize="none" pattern="[A-Za-z0-9._\-]+" placeholder="e.g. jsmith"></label>
-  <label>Role <select name="role">
-    <option value="rep">Rep: views plan, logs own visits</option>
-    <option value="manager">Manager: edits plan, sees and manages everything</option>
-    <option value="viewer">Viewer: read-only</option></select></label>
-  <button class="btn primary">Create &amp; show temporary password</button>
+<details class="card-pad mb-5" {% if people|length < 2 %}open{% endif %}><summary class="cursor-pointer font-semibold">+ Add a person</summary>
+<form method="post" action="/admin/users" class="mt-4">{{ csrf_field() }}
+  <div class="form-grid">
+    <label class="field"><span class="label">Full name</span><input class="input" name="display_name" required></label>
+    <label class="field"><span class="label">Username</span><input class="input" name="username" required autocapitalize="none" pattern="[A-Za-z0-9._\-]+" placeholder="e.g. jsmith"></label>
+  </div>
+  <p class="label">Role</p>
+  <div class="chips mb-4">
+    <label><input type="radio" name="role" value="rep" checked><span>Rep · logs own visits, light mode</span></label>
+    <label><input type="radio" name="role" value="manager"><span>Manager · edits plan, dark mode</span></label>
+    <label><input type="radio" name="role" value="viewer"><span>Viewer · read-only</span></label>
+  </div>
+  <button class="btn btn-primary" data-loading="Creating…">Create &amp; show temporary password</button>
 </form></details>
 
 <div class="table-wrap"><table class="data">
-  <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Active</th><th>Last sign-in</th><th></th></tr></thead>
+  <thead><tr><th>Person</th><th>Role</th><th>Active</th><th>Last sign-in</th><th></th></tr></thead>
   <tbody>{% for u in people %}
-  <tr class="{{ 'dim' if not u.active }}">
-    <td><input form="u{{ u.id }}" name="display_name" value="{{ u.display_name }}"></td>
-    <td><code>{{ u.username }}</code>{% if u.must_change_password %} <span class="badge warn">temp pw</span>{% endif %}
-      {% if u.locked_until and u.locked_until > now %}<span class="badge bad">locked</span>{% endif %}</td>
-    <td><select form="u{{ u.id }}" name="role">{% for r in roles %}<option {% if u.role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></td>
-    <td><select form="u{{ u.id }}" name="active"><option value="Y">Yes</option><option value="N" {% if not u.active %}selected{% endif %}>No</option></select></td>
-    <td class="small">{{ u.last_login|local or 'Never' }}</td>
-    <td class="nowrap"><form method="post" action="/admin/users/{{ u.id }}" id="u{{ u.id }}" class="inline">{{ csrf_field() }}<input type="hidden" name="action" value="save"><button class="btn small-btn">Save</button></form>
-      <form method="post" action="/admin/users/{{ u.id }}" class="inline" data-confirm="Reset {{ u.display_name }}'s password? They'll be signed out.">{{ csrf_field() }}<input type="hidden" name="action" value="reset"><button class="linkish">Reset password</button></form>
-      <form method="post" action="/admin/users/{{ u.id }}" class="inline">{{ csrf_field() }}<input type="hidden" name="action" value="unlock"><button class="linkish">Unlock</button></form></td>
+  <tr class="{{ 'opacity-60' if not u.active }}">
+    <td><div class="flex items-center gap-3"><span class="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-xs font-bold">{{ u.initials }}</span>
+      <div><input form="u{{ u.id }}" class="input min-h-9 py-1 text-sm font-semibold" name="display_name" value="{{ u.display_name }}" aria-label="Name">
+      <p class="hint mt-1"><code>{{ u.username }}</code>{% if u.must_change_password %} {{ badge('Temp password') }}{% endif %}{% if u.locked_until and u.locked_until > now %} <span class="pill pill-danger">Locked</span>{% endif %}</p></div></div></td>
+    <td><select form="u{{ u.id }}" class="input min-h-9 w-auto py-1 text-sm" name="role" aria-label="Role">{% for r in roles %}<option {% if u.role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></td>
+    <td><select form="u{{ u.id }}" class="input min-h-9 w-auto py-1 text-sm" name="active" aria-label="Active"><option value="Y">Yes</option><option value="N" {% if not u.active %}selected{% endif %}>No</option></select></td>
+    <td class="whitespace-nowrap text-muted-foreground">{{ u.last_login|local or 'Never' }}</td>
+    <td><div class="flex flex-wrap gap-1.5">
+      <form method="post" action="/admin/users/{{ u.id }}" id="u{{ u.id }}">{{ csrf_field() }}<input type="hidden" name="action" value="save"><button class="btn btn-sm">Save</button></form>
+      <form method="post" action="/admin/users/{{ u.id }}" data-confirm="Reset {{ u.display_name }}'s password? They'll be signed out.">{{ csrf_field() }}<input type="hidden" name="action" value="reset"><button class="btn btn-ghost btn-sm">Reset password</button></form>
+      {% if u.locked_until and u.locked_until > now %}<form method="post" action="/admin/users/{{ u.id }}">{{ csrf_field() }}<input type="hidden" name="action" value="unlock"><button class="btn btn-ghost btn-sm">Unlock</button></form>{% endif %}
+    </div></td>
   </tr>{% endfor %}</tbody></table></div>
-<p class="small muted">Deactivating someone signs them out immediately and keeps all their visit history.</p>
+<p class="hint mt-3">Deactivating someone signs them out immediately and keeps all their visit history. Reps get the light field theme and managers the dark theme by default; anyone can switch from their menu.</p>
 {% endblock %}

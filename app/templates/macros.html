@@ -1,45 +1,143 @@
+{# ---------- icons (Lucide, ISC licence) ---------- #}
+{% set ICONS = {
+  'home': '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/>',
+  'store': '<path d="M3 9 4.5 4h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0Z"/><path d="M5 13v8h14v-8"/><path d="M10 21v-5h4v5"/>',
+  'plus': '<path d="M12 5v14M5 12h14"/>',
+  'flag': '<path d="M4 22V4a1 1 0 0 1 1-1h11l-2 5 2 5H5"/>',
+  'chart': '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+  'pin': '<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  'check': '<path d="M20 6 9 17l-5-5"/>',
+  'x': '<path d="M18 6 6 18M6 6l12 12"/>',
+  'camera': '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3.5"/>',
+  'clipboard': '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+  'trophy': '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0Z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
+  'calendar': '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  'users': '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  'database': '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/>',
+  'list': '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  'tag': '<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+  'sun': '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/>',
+  'moon': '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  'logout': '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  'chev': '<path d="m9 18 6-6-6-6"/>',
+  'back': '<path d="m15 18-6-6 6-6"/>',
+  'alert': '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>',
+  'clock': '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  'snow': '<path d="M12 2v20M4.9 4.9l14.2 14.2M2 12h20M4.9 19.1 19.1 4.9"/><path d="m9 4 3 3 3-3M9 20l3-3 3 3M4 9l3 3-3 3M20 9l-3 3 3 3"/>',
+  'box': '<path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
+  'search': '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  'settings': '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
+  'sparkle': '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8Z"/>',
+  'image': '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+  'note': '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
+  'refresh': '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+  'palette': '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2a10 10 0 0 0 0 20c.9 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.8-1.7 1.7-1.7h2A5.6 5.6 0 0 0 22 11c0-5-4.5-9-10-9Z"/>',
+} %}
+{% macro icon(name, cls='size-5') -%}
+<svg class="{{ cls }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ ICONS[name]|safe }}</svg>
+{%- endmacro %}
+
 {% macro csrf_field() %}<input type="hidden" name="csrf_token" value="{{ csrf }}">{% endmacro %}
 
 {% macro badge(text) -%}
-{%- set cls = {'Match':'good','Resolved':'good','Active':'good','Current (2026)':'good','Done':'good',
-               'Over plan':'bad','Open':'bad','Expired':'muted','No plan price':'warn',
-               'Under plan':'warn','In Progress':'warn','Upcoming':'info','Confirm for 2026':'warn'}.get(text, 'muted') -%}
-<span class="badge {{ cls }}">{{ text }}</span>
+{%- set cls = {'Match':'pill-success','Resolved':'pill-success','Active':'pill-success','Current (2026)':'pill-success','Done':'pill-success','Still up':'pill-success',
+               'Over plan':'pill-danger','Open':'pill-danger','Gone':'pill-danger','No plan price':'pill-muted',
+               'Under plan':'pill-warning','In Progress':'pill-warning','Upcoming':'pill-info','Confirm for 2026':'pill-warning',
+               'Expired':'pill-muted','Unverified':'pill-warning'}.get(text, 'pill-muted') -%}
+{%- set ic = {'Match':'✓ ','Over plan':'✗ ','Under plan':'▲ ','Resolved':'✓ ','Done':'✓ '}.get(text, '') -%}
+<span class="pill {{ cls }}">{{ ic }}{{ text }}</span>
 {%- endmacro %}
 
+{% macro chain_mark(chain, size='h-10 w-16') -%}
+{%- set url = chain_logo(chain) -%}
+{%- if url -%}<span class="logo-plate {{ size }}"><img src="{{ url }}" alt="{{ chain }}" loading="lazy"></span>
+{%- else -%}<span class="logo-plate {{ size }} text-[10px] font-bold uppercase leading-tight text-stone-700">{{ chain[:12] }}</span>{%- endif -%}
+{%- endmacro %}
+
+{% macro brand_mark(brand, size='h-9 w-9') -%}
+{%- set url = brand_logo(brand) -%}
+{%- if url -%}<span class="logo-plate {{ size }}"><img src="{{ url }}" alt="{{ brand }}" loading="lazy"></span>
+{%- else -%}<span class="grid {{ size }} shrink-0 place-items-center rounded-xl brand-{{ brand_slug(brand) }} font-display text-sm font-bold text-white">{{ brand[:3] if brand|length <= 4 else brand.split(' ')|map('first')|join('')|upper }}</span>{%- endif -%}
+{%- endmacro %}
+
+{% macro brand_chip(brand) %}<span class="brand-chip brand-{{ brand_slug(brand) }}">{{ brand }}</span>{% endmacro %}
+
+{% macro empty(title, text, ic='sparkle') %}
+<div class="flex flex-col items-center rounded-2xl border border-dashed border-border bg-card/60 px-6 py-10 text-center">
+  <div class="grid size-12 place-items-center rounded-full bg-muted text-muted-foreground">{{ icon(ic) }}</div>
+  <p class="mt-3 font-semibold">{{ title }}</p>
+  <p class="hint mt-1 max-w-sm">{{ text }}</p>
+  {{ caller() if caller }}
+</div>
+{% endmacro %}
+
+{% macro seg_yn(name, value) %}
+<div class="seg" role="radiogroup">
+  <label><input type="radio" name="{{ name }}" value="Y" {% if value == True %}checked{% endif %}><span>Yes</span></label>
+  <label><input type="radio" name="{{ name }}" value="N" {% if value == False %}checked{% endif %}><span>No</span></label>
+</div>
+{% endmacro %}
+
+{% macro seg_display(name, value, choices) %}
+<div class="seg" role="radiogroup">
+  {% for c in choices %}<label><input type="radio" name="{{ name }}" value="{{ c }}" {% if value == c %}checked{% endif %}><span>{{ c }}</span></label>{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro money(v) %}{% if v is not none %}{{ v|money }}{% else %}<span class="text-muted-foreground">Not set</span>{% endif %}{% endmacro %}
+
+{# ---------- plan card: what the shelf should look like ---------- #}
 {% macro plan_card(c, show_link=True) %}
-<article class="plan-card brand-{{ c.p.brand|lower|replace("'", '')|replace(' ', '-') }}">
-  <header>
-    <span class="brand-chip">{{ c.p.brand }}</span>
-    <strong>{{ c.p.account }}</strong>
-    {% if c.p.data_status != 'Current (2026)' %}{{ badge(c.p.data_status) }}{% endif %}
-  </header>
-  <div class="price-row">
-    <div><span class="label">Expected shelf price</span>
-      {% if c.expected.price is none and c.sku_prices %}
-        {% for sku, price, offer in c.sku_prices %}<span><strong>{{ price|money }}</strong> <span class="small">{{ sku }}</span></span>{% endfor %}
-        <span class="hint">Promo price by SKU; other SKUs not set</span>
-      {% else %}
-      <span class="price">{% if c.expected.price is not none %}{{ c.expected.price|money }}{% else %}Not set{% endif %}</span>
-      {% if c.expected.price is not none %}<span class="hint">{{ c.expected.basis }}</span>{% endif %}
-      {% endif %}</div>
-    <div><span class="label">Current promo</span><span>{{ c.offer }}</span>
-      {% if c.next %}<span class="hint">Next starts {{ c.next|d }}</span>{% endif %}</div>
+<article class="card overflow-hidden border-l-4 edge-{{ brand_slug(c.p.brand) }}">
+  <div class="flex items-start gap-3 p-4 pb-3">
+    {{ brand_mark(c.p.brand) }}
+    <div class="min-w-0 flex-1">
+      <div class="flex flex-wrap items-center gap-2"><h3 class="font-semibold leading-tight">{{ c.p.account }}</h3>
+        {% if c.p.data_status != 'Current (2026)' %}{{ badge(c.p.data_status) }}{% endif %}</div>
+      <p class="hint">{{ c.p.brand }} · {{ c.p.market }}</p>
+    </div>
   </div>
-  <dl class="kv">
-    {% if c.p.shelf_callout %}<dt>Shelf / display</dt><dd>{{ c.p.shelf_callout }}</dd>{% endif %}
-    {% if c.p.skus %}<dt>Authorized SKUs</dt><dd>{{ c.p.skus }}</dd>{% endif %}
-    {% if c.p.case_rec %}<dt>Backstock</dt><dd>{{ c.p.case_rec }}</dd>{% endif %}
-    {% if c.p.priority %}<dt>Priority</dt><dd>{{ c.p.priority }}</dd>{% endif %}
+  <div class="grid grid-cols-2 gap-3 border-y border-border bg-raised px-4 py-3">
+    <div>
+      <p class="eyebrow">Should be</p>
+      {% if c.expected.price is none and c.sku_prices %}
+        {% for sku, price, offer in c.sku_prices %}<p class="display-num text-2xl">{{ price|money }}</p><p class="hint">{{ sku }}</p>{% endfor %}
+      {% else %}
+        <p class="display-num text-3xl">{% if c.expected.price is not none %}{{ c.expected.price|money }}{% else %}<span class="text-xl text-muted-foreground">Not set</span>{% endif %}</p>
+        {% if c.expected.price is not none %}<p class="hint">{{ c.expected.basis }}</p>{% endif %}
+      {% endif %}
+    </div>
+    <div>
+      <p class="eyebrow">Current promo</p>
+      <p class="mt-1 text-sm font-semibold">{{ c.offer }}</p>
+      {% if c.next %}<p class="hint">Next starts {{ c.next|d }}</p>{% endif %}
+    </div>
+  </div>
+  <dl class="grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-1.5 px-4 py-3 text-sm">
+    {% if c.p.shelf_callout %}<dt class="text-muted-foreground">Display</dt><dd>{{ c.p.shelf_callout }}</dd>{% endif %}
+    {% if c.p.skus %}<dt class="text-muted-foreground">SKUs</dt><dd>{{ c.p.skus }}</dd>{% endif %}
+    {% if c.p.case_rec %}<dt class="text-muted-foreground">Backstock</dt><dd>{{ c.p.case_rec }}</dd>{% endif %}
+    {% if c.p.priority %}<dt class="text-muted-foreground">Priority</dt><dd>{{ c.p.priority }}</dd>{% endif %}
   </dl>
-  {% if show_link %}<a class="small" href="/plan/{{ c.p.id }}">Full plan &amp; promo windows →</a>{% endif %}
+  {% if show_link %}<div class="px-4 pb-3"><a class="text-sm font-semibold" href="/plan/{{ c.p.id }}">Promo windows &amp; details →</a></div>{% endif %}
 </article>
 {% endmacro %}
 
-{% macro yn_select(name, value) %}
-<select name="{{ name }}">
-  <option value="" {% if value is none %}selected{% endif %}>—</option>
-  <option value="Y" {% if value == True %}selected{% endif %}>Yes</option>
-  <option value="N" {% if value == False %}selected{% endif %}>No</option>
-</select>
+{% macro win_icon(t) -%}
+{%- if 'Cold' in t %}{{ icon('snow', 'size-5') }}{% elif 'display' in t|lower or 'Secondary' in t %}{{ icon('box', 'size-5') }}{% elif 'shelf' in t|lower or 'Placement' in t %}{{ icon('list', 'size-5') }}{% elif 'Price' in t %}{{ icon('tag', 'size-5') }}{% else %}{{ icon('trophy', 'size-5') }}{% endif -%}
+{%- endmacro %}
+
+{% macro win_row(w, show_store=False) %}
+<div class="flex items-start gap-3 py-3">
+  <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/15 text-accent-text">{{ win_icon(w.win_type) }}</span>
+  <div class="min-w-0 flex-1">
+    <p class="font-semibold leading-snug">{{ w.win_type }}</p>
+    <p class="hint">{{ w.brand }}{% if w.program %} · {{ w.program.account }}{% endif %}{% if w.location %} · {{ w.location }}{% endif %}
+      {% if w.cases %} · {{ w.cases }} cases{% endif %}{% if w.facings %} · {{ w.facings }} facings/doors{% endif %}</p>
+    {% if show_store %}<p class="hint"><a href="/stores/{{ w.store.id }}">{{ w.store.label }}</a> · {{ w.created_by.display_name }} · {{ w.visit.visit_date|d }}</p>{% endif %}
+    {% if w.notes %}<p class="mt-1 text-sm">{{ w.notes }}</p>{% endif %}
+    {% if w.photos %}<div class="mt-2 flex gap-2">{% for ph in w.photos %}<a class="thumb" href="/photos/{{ ph.id }}" target="_blank" rel="noopener"><img src="/photos/{{ ph.id }}" alt="Win photo" loading="lazy"></a>{% endfor %}</div>{% endif %}
+  </div>
+  {% if w.tracked %}{{ badge('Still up' if w.status == 'Active' else 'Gone') }}{% endif %}
+</div>
 {% endmacro %}

@@ -1,28 +1,30 @@
-{% extends "base.html" %}{% block title %}Data{% endblock %}{% block mainclass %}narrow{% endblock %}
+{% extends "base.html" %}{% block title %}Data & backups{% endblock %}{% block main %}page-narrow{% endblock %}
 {% block content %}
-<h1>Data, import &amp; backups</h1>
-<section class="card">
+<h1 class="mb-5 font-display text-3xl font-semibold">Data &amp; backups</h1>
+<div class="space-y-4">
+<section class="card-pad">
   <h2>Export to Excel</h2>
-  <p>Everything in one workbook: plan, promo calendar, stores, visits, checks, follow-ups, tasks and data review.</p>
-  <a class="btn primary" href="/data/export.xlsx">Download Excel export</a>
+  <p class="mt-1 text-sm text-muted-foreground">Everything in one workbook: plan, promos, stores, visits, checks, wins &amp; placements, follow-ups, tasks and data review.</p>
+  <a class="btn btn-primary mt-4" href="/data/export.xlsx">{{ icon('database', 'size-4') }}Download Excel export</a>
 </section>
-<section class="card">
+<section class="card-pad">
   <h2>Import plan from Excel</h2>
-  <p>Upload <code>Chain_Audit_Tool.xlsx</code> or an export from this app. Reads the <strong>Chain Program</strong> and <strong>Promo Calendar</strong> sheets; programs are matched by Program ID (Brand | Account). Visits and follow-ups are never touched. A backup is taken first.</p>
-  <form method="post" action="/data/import-plan" enctype="multipart/form-data">{{ csrf_field() }}
-    <input type="file" name="file" accept=".xlsx" required>
-    <label class="inline-label"><input type="checkbox" name="replace_promos" value="Y" checked> Replace promo windows for programs in the file</label>
-    <button class="btn">Import plan</button>
+  <p class="mt-1 text-sm text-muted-foreground">Upload <code>Chain_Audit_Tool.xlsx</code> or an export from this app. It reads the <strong>Chain Program</strong> and <strong>Promo Calendar</strong> sheets and matches programs by Program ID. Visits, wins and follow-ups are never touched, and a backup is taken first.</p>
+  <form method="post" action="/data/import-plan" enctype="multipart/form-data" class="mt-4">{{ csrf_field() }}
+    <label class="field"><span class="label">Workbook</span><input class="input" type="file" name="file" accept=".xlsx" required></label>
+    <label class="mb-4 flex items-center gap-2 text-sm font-semibold"><input type="checkbox" class="size-4" name="replace_promos" value="Y" checked> Replace promo windows for programs in the file</label>
+    <button class="btn" data-loading="Importing…">Import plan</button>
   </form>
 </section>
-<section class="card">
+<section class="card-pad">
   <h2>Stores</h2>
-  <p><a href="/stores/import">Import a store list</a> · <a href="/data/stores-template.csv">CSV template</a></p>
+  <p class="mt-2 text-sm"><a href="/stores/import">Import a store list</a> · <a href="/data/stores-template.csv">CSV template</a></p>
 </section>
-<section class="card">
+<section class="card-pad">
   <h2>Database backups</h2>
-  <p class="small">A backup runs automatically every night; the newest ones are kept. Photos live in the <code>photos</code> folder of the data volume. Back up the whole volume too (see DEPLOY.md).</p>
-  <form method="post" action="/data/backup">{{ csrf_field() }}<button class="btn">Back up now</button></form>
-  <ul class="small">{% for name, size in backups %}<li><a href="/data/backups/{{ name }}">{{ name }}</a> ({{ (size/1024)|round(0)|int }} KB)</li>{% else %}<li class="muted">No backups yet.</li>{% endfor %}</ul>
+  <p class="mt-1 text-sm text-muted-foreground">A backup runs automatically every night. Photos live in the data volume's <code>photos</code> folder, so back up the whole volume too (see DEPLOY.md).</p>
+  <form method="post" action="/data/backup" class="mt-4">{{ csrf_field() }}<button class="btn" data-loading="Backing up…">Back up now</button></form>
+  <ul class="mt-4 divide-rows text-sm">{% for name, size in backups %}<li class="flex justify-between py-2"><a href="/data/backups/{{ name }}">{{ name }}</a><span class="text-muted-foreground">{{ (size/1024)|round(0)|int }} KB</span></li>{% else %}<li class="hint py-2">No backups yet.</li>{% endfor %}</ul>
 </section>
+</div>
 {% endblock %}

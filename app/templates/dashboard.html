@@ -1,52 +1,84 @@
 {% extends "base.html" %}{% block title %}Dashboard{% endblock %}
-{% macro pct(v) %}{% if v is none %}<span class="muted">—</span>{% else %}{{ (v*100)|round(0)|int }}%{% endif %}{% endmacro %}
+{% macro pct(v) %}{% if v is none %}<span class="text-muted-foreground">—</span>{% else %}{{ (v*100)|round(0)|int }}%{% endif %}{% endmacro %}
+{% macro w(v) %}w-pct-{{ ((v or 0) * 20)|round(0, 'ceil')|int * 5 if v else 0 }}{% endmacro %}
 {% block content %}
-<div class="titlebar"><h1>Dashboard</h1>
-  <form method="get" class="inline"><select name="days" data-autosubmit>{% for d_ in [7,30,90] %}<option value="{{ d_ }}" {% if days == d_ %}selected{% endif %}>Last {{ d_ }} days</option>{% endfor %}</select></form></div>
-<div class="kpis">
-  <a class="kpi" href="/visits"><span class="n">{{ k.visits }}</span><span>Visits ({{ days }}d)</span></a>
-  <div class="kpi"><span class="n">{{ k.checks }}</span><span>Program checks ({{ days }}d)</span></div>
-  <div class="kpi"><span class="n">{{ pct(k.match_rate) }}</span><span>Shelf price match ({{ k.n_checks }} priced)</span></div>
-  <a class="kpi {{ 'bad' if k.open }}" href="/issues"><span class="n">{{ k.open }}</span><span>Open follow-ups</span></a>
-  <a class="kpi {{ 'bad' if k.overdue }}" href="/issues?overdue=1"><span class="n">{{ k.overdue }}</span><span>Overdue</span></a>
-  <a class="kpi" href="/calendar"><span class="n">{{ k.active_promos }}</span><span>Promo windows live · {{ k.starting_soon }} start in 14d</span></a>
-  <a class="kpi {{ 'warn' if k.confirm }}" href="/plan?status=Confirm+for+2026"><span class="n">{{ k.confirm }}</span><span>Programs to confirm for 2026</span></a>
-  <a class="kpi" href="/stores"><span class="n">{{ k.stale }}/{{ k.stores }}</span><span>Stores not visited in {{ days }}d</span></a>
+<div class="section-title flex-wrap">
+  <div><p class="eyebrow">Team performance</p><h1 class="font-display text-3xl font-semibold sm:text-4xl">Dashboard</h1></div>
+  <form method="get"><select class="input w-auto" name="days" data-autosubmit aria-label="Period">{% for d_ in [7,30,90] %}<option value="{{ d_ }}" {% if days == d_ %}selected{% endif %}>Last {{ d_ }} days</option>{% endfor %}</select></form>
 </div>
 
-<section class="card">
-  <h2>Accountability by rep</h2>
+<div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <a class="kpi" href="/visits"><span class="eyebrow">Visits</span><span class="n">{{ k.visits }}</span><span class="hint">{{ k.checks }} program checks</span></a>
+  <a class="kpi" href="/wins?days={{ days }}"><span class="eyebrow">Wins</span><span class="n text-accent-text">{{ k.wins }}</span><span class="hint">{{ k.cases }} cases on display · {{ k.live_placements }} placements live</span></a>
+  <div class="kpi"><span class="eyebrow">Shelf price match</span><span class="n {{ 'text-success' if k.match_rate and k.match_rate >= 0.9 else 'text-warning' if k.match_rate else '' }}">{{ pct(k.match_rate) }}</span>
+    <span class="bar mt-2"><span class="{{ w(k.match_rate) }} bg-success"></span></span><span class="hint mt-1">{{ k.n_checks }} priced checks</span></div>
+  <a class="kpi {{ 'border-danger/40' if k.overdue }}" href="/issues"><span class="eyebrow">Follow-ups</span><span class="n {{ 'text-danger' if k.overdue }}">{{ k.open }}</span>
+    <span class="hint {{ 'font-semibold text-danger' if k.overdue }}">{{ k.overdue }} overdue</span></a>
+  <a class="kpi" href="/calendar"><span class="eyebrow">Promo windows live</span><span class="n">{{ k.active_promos }}</span><span class="hint">{{ k.starting_soon }} start in the next 14 days</span></a>
+  <a class="kpi {{ 'border-warning/40' if k.confirm }}" href="/plan?status=Confirm+for+2026"><span class="eyebrow">Programs to confirm</span><span class="n {{ 'text-warning' if k.confirm }}">{{ k.confirm }}</span><span class="hint">still on 2025 pricing</span></a>
+  <a class="kpi" href="/stores"><span class="eyebrow">Stores not visited</span><span class="n">{{ k.stale }}<span class="text-lg text-muted-foreground">/{{ k.stores }}</span></span><span class="hint">in {{ days }} days</span></a>
+  {% if user.is_manager %}<a class="kpi" href="/data-review"><span class="eyebrow">Data questions</span><span class="n">{{ k.data_review_open }}</span><span class="hint">open in data review</span></a>{% endif %}
+</div>
+
+<section class="mb-6">
+  <div class="section-title"><h2>Accountability by rep</h2></div>
+  {% if by_rep %}
   <div class="table-wrap"><table class="data">
-    <thead><tr><th>Person</th><th class="num">Visits</th><th class="num">Checks</th><th class="num">Price match</th><th class="num">Open follow-ups</th><th class="num">Overdue</th><th class="num">Open tasks</th><th>Last visit</th></tr></thead>
+    <thead><tr><th>Rep</th><th class="num">Visits</th><th class="num">Checks</th><th class="num">Wins</th><th>Price match</th><th class="num">Open</th><th class="num">Overdue</th><th class="num">Tasks</th><th>Last visit</th></tr></thead>
     <tbody>{% for r in by_rep %}
-    <tr><td><a href="/visits?rep={{ r.u.id }}">{{ r.u.display_name }}</a></td><td class="num">{{ r.visits }}</td><td class="num">{{ r.checks }}</td>
-      <td class="num">{{ pct(r.match) }}</td><td class="num"><a href="/issues?owner={{ r.u.id }}">{{ r.open }}</a></td>
-      <td class="num {{ 'overdue-text' if r.overdue }}">{{ r.overdue }}</td><td class="num">{{ r.tasks }}</td>
-      <td class="{{ 'overdue-text' if not r.last or (t - r.last).days > days }}">{{ r.last|d or 'Never' }}</td></tr>
+    <tr>
+      <td><a class="flex items-center gap-2 font-semibold text-foreground" href="/visits?rep={{ r.u.id }}"><span class="grid size-8 place-items-center rounded-full bg-muted text-[11px] font-bold">{{ r.u.initials }}</span>{{ r.u.display_name }}</a></td>
+      <td class="num">{{ r.visits }}</td><td class="num">{{ r.checks }}</td>
+      <td class="num">{% if r.wins %}<span class="font-semibold text-accent-text">{{ r.wins }}</span>{% else %}0{% endif %}</td>
+      <td class="min-w-36"><div class="flex items-center gap-2"><span class="bar flex-1"><span class="{{ w(r.match) }} {{ 'bg-success' if r.match and r.match >= 0.9 else 'bg-warning' }}"></span></span><span class="w-10 text-right tabular-nums">{{ pct(r.match) }}</span></div></td>
+      <td class="num"><a href="/issues?owner={{ r.u.id }}">{{ r.open }}</a></td>
+      <td class="num {{ 'font-semibold text-danger' if r.overdue }}">{{ r.overdue }}</td><td class="num">{{ r.tasks }}</td>
+      <td class="whitespace-nowrap {{ 'font-semibold text-danger' if not r.last or (t - r.last).days > days }}">{{ r.last|d or 'Never' }}</td></tr>
     {% endfor %}</tbody></table></div>
+  {% else %}{% call empty('No reps yet', 'Add your team under Team & access.', 'users') %}{% endcall %}{% endif %}
 </section>
 
-<div class="grid2">
-<section class="card">
-  <h2>By brand</h2>
-  <table class="data"><thead><tr><th>Brand</th><th class="num">Programs</th><th class="num">Live promos</th><th class="num">To confirm</th><th class="num">Open issues</th><th class="num">Price match</th></tr></thead>
-  <tbody>{% for b in brand_rows %}<tr><td><a href="/plan?brand={{ b.brand|urlencode }}">{{ b.brand }}</a></td><td class="num">{{ b.programs }}</td><td class="num">{{ b.active }}</td>
-    <td class="num">{{ b.confirm }}</td><td class="num">{{ b.open }}</td><td class="num">{{ pct(b.match) }}</td></tr>{% endfor %}</tbody></table>
-</section>
-<section class="card">
-  <h2>Open follow-ups by type</h2>
-  {% for dt_, n in by_type %}<a class="bar-row" href="/issues?dtype={{ dt_|urlencode }}"><span>{{ dt_ }}</span><span class="bar"><span class="fill w{{ ((n / by_type[0][1]) * 10)|round(0,'ceil')|int }}"></span></span><span class="num">{{ n }}</span></a>
-  {% else %}<p class="muted">No open follow-ups.</p>{% endfor %}
-  <p class="small muted">Price checks ({{ days }}d): {{ checks['Match'] }} match · {{ checks['Over plan'] }} over · {{ checks['Under plan'] }} under</p>
-</section>
+<div class="mb-6 grid gap-5 lg:grid-cols-2">
+  <section class="card-pad">
+    <h2 class="mb-3">By brand</h2>
+    <div class="space-y-4">
+    {% for b in brand_rows %}
+      <div class="flex items-center gap-3">
+        {{ brand_mark(b.brand, 'h-10 w-10') }}
+        <div class="min-w-0 flex-1">
+          <div class="flex items-baseline justify-between gap-2"><a class="font-semibold text-foreground" href="/plan?brand={{ b.brand|urlencode }}">{{ b.brand }}</a><span class="hint">{{ b.programs }} programs · {{ b.active }} live promos</span></div>
+          <div class="mt-1 flex flex-wrap gap-2 text-xs">
+            <span class="pill pill-accent">{{ b.wins }} wins</span><span class="pill pill-muted">{{ b.live }} placements up</span>
+            {% if b.open %}<span class="pill pill-danger">{{ b.open }} open</span>{% endif %}
+            {% if b.confirm %}<span class="pill pill-warning">{{ b.confirm }} to confirm</span>{% endif %}
+            <span class="pill pill-muted">match {{ pct(b.match) }}</span></div>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  </section>
+  <section class="card-pad">
+    <h2 class="mb-3">Wins by type</h2>
+    {% for t_, n in wins_by_type %}
+    <a class="mb-2.5 grid grid-cols-[1fr_2fr_2rem] items-center gap-3 text-sm text-foreground no-underline hover:no-underline" href="/wins?win_type={{ t_|urlencode }}&days={{ days }}">
+      <span class="truncate">{{ t_ }}</span><span class="bar"><span class="{{ w(n / wins_by_type[0][1]) }} bg-accent"></span></span><span class="text-right font-semibold tabular-nums">{{ n }}</span></a>
+    {% else %}<p class="hint">No wins logged in this period.</p>{% endfor %}
+    <h2 class="mb-3 mt-6">Open follow-ups by type</h2>
+    {% for dt_, n in by_type %}
+    <a class="mb-2.5 grid grid-cols-[1fr_2fr_2rem] items-center gap-3 text-sm text-foreground no-underline hover:no-underline" href="/issues?dtype={{ dt_|urlencode }}">
+      <span class="truncate">{{ dt_ }}</span><span class="bar"><span class="{{ w(n / by_type[0][1]) }} bg-danger"></span></span><span class="text-right font-semibold tabular-nums">{{ n }}</span></a>
+    {% else %}<p class="hint">No open follow-ups.</p>{% endfor %}
+    <p class="hint mt-3">Price checks: {{ checks['Match'] }} match · {{ checks['Over plan'] }} over · {{ checks['Under plan'] }} under</p>
+  </section>
 </div>
 
-<section class="card">
-  <h2>Stores not visited in {{ days }} days</h2>
-  {% if k.unverified %}<p class="small"><span class="badge warn">{{ k.unverified }} unverified</span> stores were added by reps; review them on the Stores page.</p>{% endif %}
-  {% for st, last in stale %}<a class="item link" href="/stores/{{ st.id }}">{{ st.label }} <span class="small muted">{{ ('last ' ~ (last|d)) if last else 'never visited' }}</span></a>
-  {% else %}<p class="muted">{% if k.stores %}Every store has a recent visit.{% else %}No stores loaded yet.{% endif %}</p>{% endfor %}
-  {% if k.stale > stale|length %}<p class="small muted">Showing {{ stale|length }} of {{ k.stale }}.</p>{% endif %}
+<section class="card-pad">
+  <div class="section-title"><h2>Stores not visited in {{ days }} days</h2>{% if k.unverified %}<span class="pill pill-warning">{{ k.unverified }} unverified stores</span>{% endif %}</div>
+  {% if stale %}
+  <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+  {% for st_, last in stale %}<a class="row-link" href="/stores/{{ st_.id }}">{{ chain_mark(st_.chain, 'h-8 w-12') }}<span class="min-w-0"><span class="block truncate font-semibold">{{ st_.label }}</span><span class="hint">{{ ('last ' ~ (last|d)) if last else 'never visited' }}</span></span></a>{% endfor %}
+  </div>
+  {% if k.stale > stale|length %}<p class="hint mt-2">Showing {{ stale|length }} of {{ k.stale }}.</p>{% endif %}
+  {% else %}<p class="hint">{% if k.stores %}Every store has a recent visit.{% else %}No stores loaded yet.{% endif %}</p>{% endif %}
 </section>
-{% if user.is_manager and k.data_review_open %}<p><a href="/data-review">{{ k.data_review_open }} data-review questions still open →</a></p>{% endif %}
 {% endblock %}

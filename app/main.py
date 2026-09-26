@@ -9,8 +9,8 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from . import backup, config, db
 from .common import redirect, render
-from .models import Base
-from .routes import admin, auth, dashboard, data, home, issues, plan, stores, tasks, visits
+from .migrate import upgrade
+from .routes import admin, auth, branding, wins, dashboard, data, home, issues, plan, stores, tasks, visits
 from .security import LoginRequired, PasswordChangeRequired
 from .seed import ensure_admin, seed_plan
 
@@ -24,7 +24,7 @@ def create_app(db_url: str | None = None, start_background: bool = True) -> Fast
     @asynccontextmanager
     async def lifespan(_app):
         engine = db.init_engine(db_url)
-        Base.metadata.create_all(engine)
+        upgrade(engine)
         with db.SessionLocal() as s:
             ensure_admin(s)
             if config.SEED_PLAN:
@@ -76,6 +76,6 @@ def create_app(db_url: str | None = None, start_background: bool = True) -> Fast
         return {"ok": True}
 
     app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
-    for r in (auth, home, plan, stores, visits, issues, tasks, dashboard, admin, data):
+    for r in (branding, auth, home, wins, plan, stores, visits, issues, tasks, dashboard, admin, data):
         app.include_router(r.router)
     return app

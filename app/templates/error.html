@@ -1,8 +1,9 @@
-{% extends "base.html" %}{% block title %}{{ code }}{% endblock %}{% block mainclass %}narrow{% endblock %}
+{% extends "base.html" %}{% block title %}{{ code }}{% endblock %}{% block main %}page-narrow{% endblock %}
 {% block content %}
-<div class="card">
-  <h1>{% if code == 403 %}Not allowed{% elif code == 404 %}Not found{% elif code == 400 %}Please check that{% else %}Something went wrong{% endif %}</h1>
-  <p>{{ message }}</p>
-  <p><a class="btn" href="/" data-back>Go back</a> <a class="btn" href="/">Home</a></p>
+<div class="card-pad mt-8 text-center">
+  <div class="mx-auto grid size-14 place-items-center rounded-full {{ 'bg-warning/15 text-warning' if code == 400 else 'bg-danger/10 text-danger' }}">{{ icon('alert', 'size-7') }}</div>
+  <h1 class="mt-4 font-display text-3xl font-semibold">{% if code == 403 %}Not allowed{% elif code == 404 %}Not found{% elif code == 400 %}Check that and try again{% else %}Something went wrong{% endif %}</h1>
+  <p class="mx-auto mt-2 max-w-md text-muted-foreground">{{ message }}</p>
+  <div class="mt-6 flex justify-center gap-2"><a class="btn" href="/" data-back>{{ icon('back', 'size-4') }}Go back</a><a class="btn btn-primary" href="/">Home</a></div>
 </div>
 {% endblock %}

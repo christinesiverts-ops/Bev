@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from .. import pricing
 from ..common import render, today
 from ..db import get_db
-from ..models import AuditLine, DataReviewItem, Issue, Program, Store, Task, User, Visit
+from ..models import AuditLine, DataReviewItem, Issue, Program, Store, Task, User, Visit, Win
 from ..security import current_user
 from ..seed import lists
 
@@ -24,6 +24,10 @@ def dashboard(request: Request, days: int = 30, user: User = Depends(current_use
     active_promos = sum(len(pricing.active_promos(p, t)) for p in programs)
     starting_soon = sum(1 for p in programs for pr in p.promos if t < pr.start <= t + timedelta(days=14))
     visits = db.scalars(select(Visit).where(Visit.visit_date >= since)).all()
+    wins = db.scalars(select(Win).join(Visit).where(Visit.visit_date >= since)).all()
+    live_placements = db.scalars(select(Win).where(Win.tracked.is_(True), Win.status == "Active")).all()
+    wins_by_rep = Counter(w.created_by_id for w in wins)
+    wins_by_type = Counter(w.win_type for w in wins).most_common()
     lines = db.scalars(select(AuditLine).join(Visit).where(Visit.visit_date >= since)).all()
     open_issues = db.scalars(select(Issue).where(Issue.status != "Resolved")).all()
     overdue = [i for i in open_issues if i.due_date and i.due_date < t]
@@ -44,7 +48,7 @@ def dashboard(request: Request, days: int = 30, user: User = Depends(current_use
         if u.is_manager and not (v_by_rep[u.id] or any(i.owner_id == u.id for i in open_issues) or open_tasks[u.id]):
             continue  # managers show up only when they're doing field work
         pc = [l for l in rl if l.price_check in ("Match", "Over plan", "Under plan")]
-        by_rep.append({"u": u, "visits": v_by_rep[u.id], "checks": len(rl),
+        by_rep.append({"u": u, "visits": v_by_rep[u.id], "checks": len(rl), "wins": wins_by_rep[u.id],
                        "match": (sum(1 for l in pc if l.price_check == "Match") / len(pc)) if pc else None,
                        "open": sum(1 for i in open_issues if i.owner_id == u.id),
                        "overdue": sum(1 for i in overdue if i.owner_id == u.id),
@@ -54,7 +58,8 @@ def dashboard(request: Request, days: int = 30, user: User = Depends(current_use
     for b in lists()["brands"]:
         bp = [p for p in programs if p.brand == b]
         bl = [l for l in lines if l.program.brand == b and l.price_check in ("Match", "Over plan", "Under plan")]
-        brand_rows.append({"brand": b, "programs": len(bp),
+        brand_rows.append({"brand": b, "programs": len(bp), "wins": sum(1 for w in wins if w.brand == b),
+                           "live": sum(1 for w in live_placements if w.brand == b),
                            "active": sum(len(pricing.active_promos(p, t)) for p in bp),
                            "confirm": sum(1 for p in bp if p.data_status != "Current (2026)"),
                            "open": sum(1 for i in open_issues if i.program and i.program.brand == b),
@@ -70,11 +75,12 @@ def dashboard(request: Request, days: int = 30, user: User = Depends(current_use
         "programs": len(programs),
         "confirm": sum(1 for p in programs if p.data_status != "Current (2026)"),
         "active_promos": active_promos, "starting_soon": starting_soon,
-        "visits": len(visits), "checks": len(lines), "open": len(open_issues), "overdue": len(overdue),
+        "visits": len(visits), "checks": len(lines), "wins": len(wins), "live_placements": len(live_placements),
+        "cases": sum(w.cases or 0 for w in wins), "open": len(open_issues), "overdue": len(overdue),
         "match_rate": match_rate, "n_checks": n_checks,
         "stores": len(stores), "stale": len(stale),
         "unverified": sum(1 for st in stores if not st.verified),
         "data_review_open": db.scalar(select(func.count(DataReviewItem.id)).where(DataReviewItem.resolved.is_(False))),
     }
     return render(request, "dashboard.html", user=user, k=kpis, by_rep=by_rep, brand_rows=brand_rows, by_type=by_type,
-                  stale=stale[:25], days=days, t=t, checks=checks)
+                  stale=stale[:25], days=days, t=t, checks=checks, wins_by_type=wins_by_type)

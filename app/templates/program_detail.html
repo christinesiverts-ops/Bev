@@ -1,70 +1,62 @@
-{% extends "base.html" %}{% from "macros.html" import plan_card %}{% block title %}{{ p.code }}{% endblock %}
+{% extends "base.html" %}{% block title %}{{ p.code }}{% endblock %}
 {% block content %}
-<div class="titlebar"><h1>{{ p.code }}</h1>
-  {% if user.is_manager %}<div><a class="btn" href="/plan/{{ p.id }}/edit">Edit</a>
-    <form method="post" action="/plan/{{ p.id }}/archive" class="inline" data-confirm="{{ 'Archive' if p.active else 'Restore' }} this program?">{{ csrf_field() }}
-      <button class="btn">{{ 'Archive' if p.active else 'Restore' }}</button></form></div>{% endif %}</div>
-{% if not p.active %}<div class="flash warn">This program is archived and hidden from store pages.</div>{% endif %}
+<a href="/plan" class="mb-3 inline-flex items-center gap-1 text-sm font-semibold">{{ icon('back', 'size-4') }}Programs</a>
+<div class="section-title flex-wrap">
+  <div class="flex items-center gap-3">{{ chain_mark(p.chain, 'h-12 w-20') }}<div><h1 class="font-display text-3xl font-semibold leading-tight">{{ p.account }}</h1><p class="mt-1">{{ brand_chip(p.brand) }} <span class="hint">{{ p.chain }}</span></p></div></div>
+  {% if user.is_manager %}<div class="flex gap-2"><a class="btn" href="/plan/{{ p.id }}/edit">Edit</a>
+    <form method="post" action="/plan/{{ p.id }}/archive" data-confirm="{{ 'Archive' if p.active else 'Restore' }} this program?">{{ csrf_field() }}<button class="btn btn-ghost">{{ 'Archive' if p.active else 'Restore' }}</button></form></div>{% endif %}
+</div>
+{% if not p.active %}<div class="toast toast-warn mb-4"><span class="text-warning">{{ icon('alert') }}</span>This program is archived and hidden from store pages.</div>{% endif %}
 
-{{ plan_card({'p': p, 'offer': offer, 'expected': expected, 'next': nxt, 'sku_prices': sku_prices}, show_link=False) }}
-
-<section class="card">
-  <h2>Account details</h2>
-  <dl class="kv wide">
-    <dt>Chain / banner</dt><dd>{{ p.chain }}</dd>
-    <dt>Market</dt><dd>{{ p.market }}</dd>
-    <dt>Outlets</dt><dd>{{ p.outlets_text }}{% if p.total_outlets %} (total {{ p.total_outlets }}){% endif %}</dd>
-    <dt>Case cost / frontline</dt><dd>{{ p.case_cost_text }}</dd>
-    <dt>EDV / SRP</dt><dd>{{ p.srp_text }}</dd>
-    <dt>Base shelf price</dt><dd>{{ p.base_price|money }}</dd>
-    <dt>Promo timing</dt><dd>{{ p.timing_text }}</dd>
-    <dt>Owner</dt><dd>{{ p.owner }}</dd>
-    <dt>Source</dt><dd>{{ p.source }}</dd>
-    <dt>Data status</dt><dd>{{ badge(p.data_status) }}{% if p.last_verified %} · verified {{ p.last_verified|d }}{% endif %}</dd>
-  </dl>
-</section>
-
-<section class="card" id="promos">
-  <h2>Promo windows</h2>
-  <div class="table-wrap"><table class="data">
-    <thead><tr><th>Status</th><th>SKU</th><th>Type</th><th>Offer</th><th class="num">Unit retail</th><th class="num">Case cost</th>
-      <th>Start</th><th>End</th><th>Display</th><th>Source</th>{% if user.is_manager %}<th></th>{% endif %}</tr></thead>
-    <tbody>
-    {% for pr, st in promos %}
-    <tr class="{{ 'dim' if st == 'Expired' }}">
-      <td>{{ badge(st) }}</td><td>{{ pr.sku }}</td><td>{{ pr.offer_type }}</td><td>{{ pr.offer }}</td>
-      <td class="num">{{ pr.unit_retail|money }}</td><td class="num">{{ pr.case_cost|money }}</td>
-      <td>{{ pr.start|d }}</td><td>{{ pr.end|d }}</td><td>{{ 'Y' if pr.display_required else '' }}</td>
-      <td class="small">{{ pr.source }}</td>
-      {% if user.is_manager %}<td class="nowrap"><a href="/promos/{{ pr.id }}/edit">Edit</a>
-        <form method="post" action="/promos/{{ pr.id }}/delete" class="inline" data-confirm="Delete this promo window?">{{ csrf_field() }}<button class="linkish danger">Delete</button></form></td>{% endif %}
-    </tr>
-    {% else %}<tr><td colspan="11" class="muted">No promo windows.</td></tr>{% endfor %}
-    </tbody></table></div>
-
-  {% if user.is_manager %}
-  <details class="addbox"><summary class="btn">+ Add promo window</summary>
-    <form method="post" action="/plan/{{ p.id }}/promos" class="formgrid">{{ csrf_field() }}
-      {% include "_promo_fields.html" %}
-      <button class="btn primary">Add window</button>
-    </form>
-  </details>
-  {% endif %}
-</section>
-
-<div class="grid2">
-<section class="card">
-  <h2>Open follow-ups</h2>
-  {% for i in open_issues %}<a class="item link" href="/issues/{{ i.id }}">{{ badge(i.status) }} {{ i.discrepancy_type }} · {{ i.store.label }}</a>
-  {% else %}<p class="muted">None.</p>{% endfor %}
-</section>
-<section class="card">
-  <h2>Recent checks</h2>
-  {% for l in recent %}
-  <a class="item link" href="/visits/{{ l.visit.id }}">{{ l.visit.visit_date|d }} · {{ l.visit.store.label }} · {{ l.visit.rep.display_name }}
-    {% if l.price_check %}{{ badge(l.price_check) }}{% endif %}
-    {% if l.observed_price is not none %}<span class="small">{{ l.observed_price|money }}</span>{% endif %}</a>
-  {% else %}<p class="muted">No checks logged yet.</p>{% endfor %}
-</section>
+<div class="grid gap-5 lg:grid-cols-[1fr_20rem]">
+  <div class="min-w-0 space-y-5">
+    {{ plan_card({'p': p, 'offer': offer, 'expected': expected, 'next': nxt, 'sku_prices': sku_prices}, show_link=False) }}
+    <section id="promos" class="scroll-mt-24">
+      <div class="section-title"><h2>Promo windows</h2></div>
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>Status</th><th>Offer</th><th>SKU</th><th class="num">Retail</th><th class="num">Case cost</th><th>Dates</th><th>Display</th>{% if user.is_manager %}<th></th>{% endif %}</tr></thead>
+        <tbody>
+        {% for pr, st_ in promos %}
+        <tr class="{{ 'opacity-60' if st_ == 'Expired' }}">
+          <td>{{ badge(st_) }}</td><td><span class="font-semibold">{{ pr.offer }}</span><span class="hint block">{{ pr.offer_type }} · {{ pr.source }}</span></td><td>{{ pr.sku }}</td>
+          <td class="num">{{ pr.unit_retail|money }}</td><td class="num">{{ pr.case_cost|money }}</td>
+          <td class="whitespace-nowrap">{{ pr.start|d }} – {{ pr.end|d }}</td><td>{{ '✓' if pr.display_required else '' }}</td>
+          {% if user.is_manager %}<td class="whitespace-nowrap"><a class="font-semibold" href="/promos/{{ pr.id }}/edit">Edit</a>
+            <form method="post" action="/promos/{{ pr.id }}/delete" class="inline" data-confirm="Delete this promo window?">{{ csrf_field() }}<button class="linkish ml-2 text-danger">Delete</button></form></td>{% endif %}
+        </tr>
+        {% else %}<tr><td colspan="8" class="text-muted-foreground">No promo windows yet.</td></tr>{% endfor %}
+        </tbody></table></div>
+      {% if user.is_manager %}
+      <details class="card-pad mt-3"><summary class="cursor-pointer font-semibold">+ Add promo window</summary>
+        <form method="post" action="/plan/{{ p.id }}/promos" class="mt-4">{{ csrf_field() }}
+          {% set pr = None %}{% include "_promo_fields.html" %}
+          <button class="btn btn-primary" data-loading="Adding…">Add window</button>
+        </form>
+      </details>
+      {% endif %}
+    </section>
+  </div>
+  <aside class="space-y-5">
+    <section class="card-pad">
+      <h2 class="mb-3">Account details</h2>
+      <dl class="space-y-2.5 text-sm">
+        {% for label, val in [('Market', p.market), ('Outlets', p.outlets_text ~ (' (total ' ~ p.total_outlets ~ ')' if p.total_outlets else '')), ('Case cost / frontline', p.case_cost_text), ('EDV / SRP', p.srp_text), ('Base shelf price', p.base_price|money), ('Promo timing', p.timing_text), ('Owner', p.owner), ('Source', p.source)] %}
+        {% if val %}<div><dt class="eyebrow">{{ label }}</dt><dd>{{ val }}</dd></div>{% endif %}
+        {% endfor %}
+        <div><dt class="eyebrow">Data status</dt><dd>{{ badge(p.data_status) }}{% if p.last_verified %} <span class="hint">verified {{ p.last_verified|d }}</span>{% endif %}</dd></div>
+      </dl>
+    </section>
+    <section class="card-pad">
+      <h2 class="mb-2">Open follow-ups</h2>
+      {% for i in open_issues %}<a class="block py-1.5 text-sm" href="/issues/{{ i.id }}">{{ badge(i.status) }} {{ i.discrepancy_type }} · {{ i.store.label }}</a>
+      {% else %}<p class="hint">None.</p>{% endfor %}
+    </section>
+    <section class="card-pad">
+      <h2 class="mb-2">Recent checks</h2>
+      {% for l in recent %}
+      <a class="block py-1.5 text-sm text-foreground" href="/visits/{{ l.visit.id }}"><span class="font-semibold">{{ l.visit.visit_date|d }}</span> · {{ l.visit.store.label }} {% if l.price_check %}{{ badge(l.price_check) }}{% endif %}</a>
+      {% else %}<p class="hint">No checks logged yet.</p>{% endfor %}
+    </section>
+  </aside>
 </div>
 {% endblock %}

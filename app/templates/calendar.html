@@ -1,21 +1,20 @@
 {% extends "base.html" %}{% block title %}Promo calendar{% endblock %}
 {% block content %}
-<h1>Promo calendar</h1>
-<form class="filters" method="get">
-  <select name="status" data-autosubmit>
-    {% for s_ in ['Active','Upcoming','Expired',''] %}<option value="{{ s_ }}" {% if f.status == s_ %}selected{% endif %}>{{ s_ or 'All windows' }}</option>{% endfor %}</select>
-  <select name="brand" data-autosubmit><option value="">All brands</option>
-    {% for b in brands %}<option {% if f.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}</select>
-  <button class="btn">Filter</button>
+<h1 class="mb-4 font-display text-3xl font-semibold">Promo calendar</h1>
+<form class="mb-5 flex flex-wrap gap-2" method="get">
+  <select class="input w-auto" name="status" data-autosubmit aria-label="Status">{% for s_ in ['Active','Upcoming','Expired',''] %}<option value="{{ s_ }}" {% if f.status == s_ %}selected{% endif %}>{{ s_ or 'All windows' }}</option>{% endfor %}</select>
+  <select class="input w-auto" name="brand" data-autosubmit aria-label="Brand"><option value="">All brands</option>{% for b in brands %}<option {% if f.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}</select>
 </form>
-<p class="muted small">{{ rows|length }} windows · today is {{ t|d }}</p>
+<p class="hint mb-3">{{ rows|length }} windows · today is {{ t|d }}</p>
+{% if rows %}
 <div class="table-wrap"><table class="data">
-  <thead><tr><th>Status</th><th>Program</th><th>SKU</th><th>Offer</th><th class="num">Unit retail</th><th class="num">Case cost</th><th>Start</th><th>End</th><th>Display</th></tr></thead>
+  <thead><tr><th>Status</th><th>Program</th><th>Offer</th><th>SKU</th><th class="num">Retail</th><th class="num">Case cost</th><th>Dates</th><th>Display</th></tr></thead>
   <tbody>
-  {% for pr, st in rows %}
-  <tr><td>{{ badge(st) }}</td><td><a href="/plan/{{ pr.program.id }}">{{ pr.program.code }}</a></td><td>{{ pr.sku }}</td><td>{{ pr.offer }}</td>
-    <td class="num">{{ pr.unit_retail|money }}</td><td class="num">{{ pr.case_cost|money }}</td><td>{{ pr.start|d }}</td><td>{{ pr.end|d }}</td>
-    <td>{{ 'Y' if pr.display_required else '' }}</td></tr>
-  {% else %}<tr><td colspan="9" class="muted">No windows match.</td></tr>{% endfor %}
+  {% for pr, st_ in rows %}
+  <tr><td>{{ badge(st_) }}</td><td><a class="font-semibold" href="/plan/{{ pr.program.id }}">{{ pr.program.account }}</a><span class="mt-0.5 block">{{ brand_chip(pr.program.brand) }}</span></td>
+    <td>{{ pr.offer }}</td><td>{{ pr.sku }}</td><td class="num">{{ pr.unit_retail|money }}</td><td class="num">{{ pr.case_cost|money }}</td>
+    <td class="whitespace-nowrap">{{ pr.start|d }} – {{ pr.end|d }}</td><td>{{ '✓' if pr.display_required else '' }}</td></tr>
+  {% endfor %}
   </tbody></table></div>
+{% else %}{% call empty('No windows match', 'Try another status or brand.', 'calendar') %}{% endcall %}{% endif %}
 {% endblock %}

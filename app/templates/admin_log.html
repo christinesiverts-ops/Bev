@@ -1,11 +1,11 @@
 {% extends "base.html" %}{% block title %}Activity log{% endblock %}
 {% block content %}
-<h1>Activity log</h1>
+<h1 class="mb-4 font-display text-3xl font-semibold">Activity log</h1>
 <div class="table-wrap"><table class="data">
   <thead><tr><th>When</th><th>Who</th><th>Action</th><th>What</th><th>Detail</th></tr></thead>
   <tbody>{% for r in rows %}
-  <tr><td class="nowrap small">{{ r.at|local }}</td><td>{{ r.user.display_name if r.user else 'system' }}</td><td>{{ r.action }}</td>
-    <td>{{ r.entity }}{% if r.entity_id %} #{{ r.entity_id }}{% endif %}</td><td class="small">{{ r.detail }}</td></tr>
+  <tr><td class="whitespace-nowrap text-muted-foreground">{{ r.at|local }}</td><td class="whitespace-nowrap font-semibold">{{ r.user.display_name if r.user else 'system' }}</td>
+    <td><span class="pill pill-muted">{{ r.action }}</span></td><td class="whitespace-nowrap">{{ r.entity }}{% if r.entity_id %} #{{ r.entity_id }}{% endif %}</td><td class="text-muted-foreground">{{ r.detail }}</td></tr>
   {% endfor %}</tbody></table></div>
-<p>{% if page > 1 %}<a href="?page={{ page - 1 }}">← Newer</a>{% endif %} {% if more %}<a href="?page={{ page + 1 }}">Older →</a>{% endif %}</p>
+<div class="mt-4 flex gap-2">{% if page > 1 %}<a class="btn btn-sm" href="?page={{ page - 1 }}">← Newer</a>{% endif %}{% if more %}<a class="btn btn-sm" href="?page={{ page + 1 }}">Older →</a>{% endif %}</div>
 {% endblock %}

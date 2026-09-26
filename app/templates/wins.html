@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% block title %}Wins{% endblock %}
+{% block content %}
+<div class="section-title flex-wrap"><div><h1 class="font-display text-3xl font-semibold">Wins</h1>
+  <p class="hint">Displays, cold placements, new SKUs and ads the team secured.</p></div></div>
+<form class="mb-5 flex flex-wrap gap-2" method="get">
+  <select class="input w-auto" name="days" data-autosubmit aria-label="Period">{% for d_ in [7,30,90,365] %}<option value="{{ d_ }}" {% if days == d_ %}selected{% endif %}>Last {{ d_ }} days</option>{% endfor %}</select>
+  <select class="input w-auto" name="brand" data-autosubmit aria-label="Brand"><option value="">All brands</option>{% for b in brands %}<option {% if f.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}</select>
+  <select class="input w-auto" name="win_type" data-autosubmit aria-label="Type"><option value="">All types</option>{% for t_ in win_types %}<option {% if f.win_type == t_ %}selected{% endif %}>{{ t_ }}</option>{% endfor %}</select>
+  <select class="input w-auto" name="rep" data-autosubmit aria-label="Person"><option value="">Everyone</option>{% for u in team %}<option value="{{ u.id }}" {% if f.rep == u.id %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select>
+  <select class="input w-auto" name="status" data-autosubmit aria-label="Placement status"><option value="">Any status</option><option value="Active" {% if f.status == 'Active' %}selected{% endif %}>Still up</option><option value="Gone" {% if f.status == 'Gone' %}selected{% endif %}>Gone</option></select>
+</form>
+<div class="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+  <div class="kpi"><span class="eyebrow">Wins</span><span class="n text-accent-text">{{ wins|length }}</span></div>
+  <div class="kpi"><span class="eyebrow">Displays &amp; cold</span><span class="n">{{ wins|selectattr('tracked')|list|length }}</span></div>
+  <div class="kpi"><span class="eyebrow">Cases on display</span><span class="n">{{ wins|map(attribute='cases')|select|sum }}</span></div>
+  <div class="kpi"><span class="eyebrow">Still up</span><span class="n text-success">{{ wins|selectattr('tracked')|selectattr('status', 'equalto', 'Active')|list|length }}</span></div>
+</div>
+{% if wins %}
+<div class="card divide-rows px-4">{% for w in wins %}{{ win_row(w, show_store=True) }}{% endfor %}</div>
+{% else %}{% call empty('No wins in this period', 'Log a win from any visit: new displays, cold placements, new SKUs, ads.', 'trophy') %}{% endcall %}{% endif %}
+{% endblock %}

@@ -1,10 +1,14 @@
-{% extends "base.html" %}{% from "macros.html" import yn_select %}{% block title %}Edit check{% endblock %}{% block mainclass %}narrow{% endblock %}
+{% extends "base.html" %}{% block title %}Edit check{% endblock %}{% block main %}page-narrow{% endblock %}
 {% block content %}
-<h1>Edit check</h1>
-<p><a href="/visits/{{ line.visit_id }}">← Back to visit</a> · {{ line.program.code }}</p>
-<form method="post" enctype="multipart/form-data" class="card formgrid">{{ csrf_field() }}
+<a href="/visits/{{ line.visit_id }}#checks" class="mb-3 inline-flex items-center gap-1 text-sm font-semibold">{{ icon('back', 'size-4') }}Back to visit</a>
+<h1 class="mb-1">Edit check</h1>
+<p class="hint mb-4">{{ line.program.code }} · plan price recalculates for {{ line.visit.visit_date|d }} when you save.</p>
+<script type="application/json" id="plan-data">{}</script>
+<form method="post" enctype="multipart/form-data" class="card-pad">{{ csrf_field() }}
   {% include "_line_fields.html" %}
-  <p class="hint span2">Plan price is recalculated for the visit date when you save.</p>
-  <button class="btn primary">Save</button>
+  <div class="flex flex-wrap gap-2">
+    <button class="btn btn-primary btn-lg" data-loading="Saving…">Save</button>
+  </div>
 </form>
+<form method="post" action="/lines/{{ line.id }}/delete" class="mt-4" data-confirm="Remove this check?">{{ csrf_field() }}<button class="btn btn-danger btn-sm">Remove this check</button></form>
 {% endblock %}
