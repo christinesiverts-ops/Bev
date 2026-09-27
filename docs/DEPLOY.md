@@ -100,11 +100,14 @@ docker compose start app
 ## 5. Updating
 
 ```bash
-git pull
-docker compose up -d --build
+cd /path/to/chain-audit
+./scripts/deploy.sh --status   # what's deployed vs. what's new
+./scripts/deploy.sh            # backup -> pull -> build -> restart -> health check
 ```
 
-The database schema is created automatically. The plan data is only seeded when the database is empty, so an update never overwrites your edits.
+The script backs up the database first. If the new version doesn't pass its health check, it automatically rolls back to the previous image and commit and tells you which commit failed. The database schema is upgraded automatically (additive only), and plan data is only seeded into an empty database, so updates never overwrite your edits.
+
+Keep server-specific settings out of tracked files. Use `.env` for settings, and an untracked `docker-compose.override.yml` for things like a bind-mounted data folder or a proxy network. Otherwise `git pull` will conflict.
 
 ## 6. Security notes
 
