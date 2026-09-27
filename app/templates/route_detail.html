@@ -1,0 +1,58 @@
+{% extends "base.html" %}{% block title %}{{ r.name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css"><script src="/static/vendor/leaflet/leaflet.js" defer></script><script src="/static/map.js" defer></script>{% endblock %}
+{% block content %}
+<script type="application/json" id="map-config">{{ {'tiles': tiles, 'mode': 'route', 'stops': stops_json, 'start': start}|tojson }}</script>
+<a href="/routes" class="mb-3 inline-flex items-center gap-1 text-sm font-semibold">{{ icon('back', 'size-4') }}Routes</a>
+<div class="section-title flex-wrap">
+  <div><p class="eyebrow">{{ r.route_date.strftime('%A') }} · {{ r.route_date|d }} · {{ r.assignee.display_name }}</p>
+    <h1 class="font-display text-3xl font-semibold">{{ r.name }}</h1></div>
+  <div class="flex flex-wrap gap-2">
+    {% if v.remaining_links %}<a class="btn btn-primary" href="{{ v.remaining_links[0] }}" target="_blank" rel="noopener">{{ icon('pin', 'size-4') }}Navigate{{ ' (part 1)' if v.remaining_links|length > 1 }}</a>
+      {% for l in v.remaining_links[1:] %}<a class="btn" href="{{ l }}" target="_blank" rel="noopener">Part {{ loop.index + 1 }}</a>{% endfor %}{% endif %}
+    {% if editable %}<form method="post" action="/routes/{{ r.id }}/optimize" data-reoptimize title="Re-order the stops you haven't visited, starting from where you are now">{{ csrf_field() }}<input type="hidden" name="lat"><input type="hidden" name="lng">
+      <button class="btn" data-loading="Re-ordering…">{{ icon('refresh', 'size-4') }}Re-optimize from here</button></form>{% endif %}
+  </div>
+</div>
+
+<div class="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+  <div class="kpi"><span class="eyebrow">Progress</span><span class="n">{{ v.done }}<span class="text-lg text-muted-foreground">/{{ r.stops|length }}</span></span></div>
+  <div class="kpi"><span class="eyebrow">Distance</span><span class="n">{{ v.summary.miles }}<span class="text-lg text-muted-foreground"> mi</span></span></div>
+  <div class="kpi"><span class="eyebrow">Drive time</span><span class="n">{{ v.summary.drive_min // 60 }}<span class="text-lg text-muted-foreground">h</span> {{ v.summary.drive_min % 60 }}<span class="text-lg text-muted-foreground">m</span></span></div>
+  <div class="kpi"><span class="eyebrow">Day with stops</span><span class="n">~{{ (v.summary.total_min / 60)|round(1) }}<span class="text-lg text-muted-foreground">h</span></span><span class="hint">{{ v.summary.stop_min }} min per stop</span></div>
+</div>
+
+<div class="grid gap-5 lg:grid-cols-[1fr_26rem]">
+  <div class="card relative h-[45vh] overflow-hidden lg:h-[calc(100vh-15rem)]"><div id="map" class="absolute inset-0 z-0 bg-muted" role="application" aria-label="Route map"></div></div>
+  <section id="stops">
+    <ol class="space-y-2">
+    {% for x in v.rows %}{% set st = x.stop.store %}
+    <li class="card flex gap-3 p-3 {{ 'opacity-70' if x.visit }} {{ 'ring-2 ring-accent' if v.next and v.next.stop.id == x.stop.id }}">
+      <span class="grid size-9 shrink-0 place-items-center rounded-full text-sm font-bold {{ 'bg-success text-white' if x.visit else 'bg-primary text-primary-foreground' }}">{% if x.visit %}✓{% else %}{{ loop.index }}{% endif %}</span>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2">{{ chain_mark(st.chain, 'h-7 w-11') }}<a class="truncate font-semibold text-foreground" href="/stores/{{ st.id }}">{{ st.chain }} #{{ st.store_number }}</a></div>
+        <p class="hint mt-0.5 truncate">{{ st.address }} {{ st.city }}</p>
+        {% if x.leg and x.leg.km %}<p class="mt-1 text-xs text-muted-foreground">{{ icon('pin', 'size-3.5 inline') }} {{ (x.leg.km * 0.621371)|round(1) }} mi · ~{{ x.leg.minutes }} min drive</p>{% elif st.lat is none %}<p class="mt-1 text-xs text-warning">Not on the map yet: placed at first check-in</p>{% endif %}
+        {% if x.stop.reason %}<p class="mt-1 text-xs"><span class="pill pill-warning">{{ x.stop.reason }}</span></p>{% endif %}
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          {% if x.visit %}<a class="btn btn-sm" href="/visits/{{ x.visit.id }}">Visit</a><a class="btn btn-sm" href="/visits/{{ x.visit.id }}/recap">Recap</a>
+          {% elif editable %}<a class="btn btn-primary btn-sm" href="/visits/new?store_id={{ st.id }}">Check in</a>{% endif %}
+          {% if st.lat is not none %}<a class="btn btn-ghost btn-sm" href="https://www.google.com/maps/dir/?api=1&destination={{ '%.6f'|format(st.lat) }},{{ '%.6f'|format(st.lng) }}" target="_blank" rel="noopener">Directions</a>{% endif %}
+          {% if editable and not x.visit %}
+          <span class="ml-auto flex gap-1">
+            {% for act, lbl in [('up','↑'),('down','↓'),('remove','✕')] %}<form method="post" action="/routes/{{ r.id }}/stops/{{ x.stop.id }}">{{ csrf_field() }}<input type="hidden" name="action" value="{{ act }}"><button class="btn btn-ghost btn-sm {{ 'text-danger' if act == 'remove' }}" aria-label="{{ act }}">{{ lbl }}</button></form>{% endfor %}
+          </span>{% endif %}
+        </div>
+      </div>
+    </li>
+    {% endfor %}
+    </ol>
+    {% if editable %}
+    <form method="post" action="/routes/{{ r.id }}/stops" class="card mt-3 flex gap-2 p-3">{{ csrf_field() }}
+      <select class="input min-h-10 flex-1 text-sm" name="store_id" aria-label="Add a stop" required><option value="">Add a stop…</option>{% for st in add_options %}<option value="{{ st.id }}">{{ st.label }}</option>{% endfor %}</select>
+      <button class="btn btn-sm">Add</button></form>
+    <form method="post" action="/routes/{{ r.id }}/delete" class="mt-3" data-confirm="Delete this route?">{{ csrf_field() }}<button class="btn btn-danger btn-sm">Delete route</button></form>
+    {% endif %}
+    <p class="hint mt-3">Distances and drive times are planning estimates from straight-line distance. Navigate opens Google Maps with live traffic.</p>
+  </section>
+</div>
+{% endblock %}

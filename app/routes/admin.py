@@ -20,7 +20,8 @@ def _active_managers(db) -> int:
 @router.get("/users")
 def users(request: Request, user: User = Depends(require_manager), db: Session = Depends(get_db)):
     people = db.scalars(select(User).order_by(User.active.desc(), User.display_name)).all()
-    return render(request, "admin_users.html", user=user, people=people, roles=ROLES, now=datetime.utcnow(),
+    managers = [p for p in people if p.role == "manager" and p.active]
+    return render(request, "admin_users.html", user=user, people=people, roles=ROLES, now=datetime.utcnow(), managers=managers,
                   new_pw=request.session.pop("new_pw", None))
 
 
@@ -38,7 +39,7 @@ async def user_create(request: Request, user: User = Depends(require_manager), d
         raise HTTPException(400, f"Username '{username}' is taken.")
     pw = temp_password()
     u = User(username=username, display_name=display, role=role, password_hash=hash_password(pw),
-             must_change_password=True)
+             must_change_password=True, manager_id=user.id if role != "manager" else None)
     db.add(u)
     db.flush()
     log(db, user, "create", "user", u.id, f"{username} role={role}")
@@ -69,6 +70,13 @@ async def user_update(uid: int, request: Request, user: User = Depends(require_m
             changes.append("activated" if active else "deactivated")
             u.session_version += 1  # sign out everywhere
         u.role, u.active = role, active
+        mid = s(form.get("manager_id"))
+        new_mgr = int(mid) if mid.isdigit() and int(mid) != u.id else None
+        if new_mgr and not (db.get(User, new_mgr) and db.get(User, new_mgr).role == "manager"):
+            raise HTTPException(400, "Reports-to must be a manager.")
+        if new_mgr != u.manager_id:
+            changes.append(f"reports_to {u.manager_id}->{new_mgr}")
+            u.manager_id = new_mgr
         u.display_name = s(form.get("display_name")) or u.display_name
         log(db, user, "update", "user", u.id, ", ".join(changes) or "name")
         flash(request, f"Saved {u.display_name}.")

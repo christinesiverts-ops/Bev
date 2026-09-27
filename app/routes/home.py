@@ -49,6 +49,8 @@ def home(request: Request, user: User = Depends(current_user), db: Session = Dep
             "overdue": db.scalar(select(func.count(Issue.id)).where(Issue.status != "Resolved", Issue.due_date < t)),
         }
     recent_wins = db.scalars(select(Win).order_by(Win.created_at.desc()).limit(5)).all()
-    return render(request, "home.html", user=user, t=t, my_tasks=my_tasks, my_issues=my_issues,
+    from .maps import todays_route
+    route, route_v = todays_route(db, user, t)
+    return render(request, "home.html", user=user, t=t, route=route, route_v=route_v, my_tasks=my_tasks, my_issues=my_issues,
                   my_visits=my_visits, open_visit=open_visit, stats=stats, recent_stores=recent_stores,
                   team=team, recent_wins=recent_wins)

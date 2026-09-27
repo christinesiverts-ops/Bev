@@ -14,6 +14,10 @@ A self-hosted, phone-friendly web app. **See [docs/DEPLOY.md](docs/DEPLOY.md) to
   - the expected price is frozen into each audit record
 - **Follow-ups:** raised automatically from discrepancies, each with an owner, due date and a status history. They're shown on the store page and on the next visit.
 - **Wins:** new displays, cold placements (cooler and cold vault doors), new SKUs, secondary placements and ads, each with photos, cases and facings. Display and placement wins are re-checked on later visits ("Still up / Gone").
+- **Map & routes:** all stores on a map, colored by what needs attention (overdue follow-ups, placements due a re-check, not visited in 30 days). Pick stops and the app orders them into the shortest route, with distance, drive-time estimates and Google Maps navigation. Managers can plan routes and assign them to a rep for a day. Stores get their map location from a rep's first GPS check-in, from lat/long in a store import, or from address lookup.
+- **Recaps:** a branded recap for each visit (a team copy, and a store/distributor copy without internal notes), shown as a page and as a PDF reps can share from their phone. There's also a day recap per rep.
+- **Team:** managers see what each person is doing right now: in-store status, today's route progress, follow-ups, wins and an activity feed. Each person has a detail page with 14 days of visits.
+- **Invite links:** managers create single-use sign-up links that expire after 7 days and text or email them. New people choose their own login and report to the manager who invited them.
 - **Tasks:** managers assign work to reps.
 - **Dashboard:** visits, price match rate, open and overdue follow-ups by rep and brand, and stores not visited recently.
 - **Roles:** Manager (edits plan, manages users), Rep (views plan, edits only their own visits), Viewer (read-only).

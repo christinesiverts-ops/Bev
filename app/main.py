@@ -10,7 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from . import backup, config, db
 from .common import redirect, render
 from .migrate import upgrade
-from .routes import admin, auth, branding, wins, dashboard, data, home, issues, plan, stores, tasks, visits
+from .routes import admin, auth, branding, maps, recap, team, wins, dashboard, data, home, issues, plan, stores, tasks, visits
 from .security import LoginRequired, PasswordChangeRequired
 from .seed import ensure_admin, seed_plan
 
@@ -46,7 +46,7 @@ def create_app(db_url: str | None = None, start_background: bool = True) -> Fast
         resp.headers.setdefault("Permissions-Policy", "geolocation=(self), camera=(self), microphone=()")
         resp.headers.setdefault(
             "Content-Security-Policy",
-            "default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; "
+            f"default-src 'self'; img-src 'self' data: blob: {config.tile_origin()}; style-src 'self'; script-src 'self'; "
             "form-action 'self'; frame-ancestors 'none'; base-uri 'self'")
         if request.url.path.startswith(("/photos/", "/data/")):
             resp.headers["Cache-Control"] = "private, no-store"
@@ -76,6 +76,6 @@ def create_app(db_url: str | None = None, start_background: bool = True) -> Fast
         return {"ok": True}
 
     app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
-    for r in (branding, auth, home, wins, plan, stores, visits, issues, tasks, dashboard, admin, data):
+    for r in (branding, auth, home, wins, maps, recap, team, plan, stores, visits, issues, tasks, dashboard, admin, data):
         app.include_router(r.router)
     return app

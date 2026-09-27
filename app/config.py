@@ -36,3 +36,22 @@ GPS_FLAG_METERS = int(os.environ.get("GPS_FLAG_METERS", "300"))
 def ensure_dirs() -> None:
     for d in (DATA_DIR, PHOTO_DIR, BACKUP_DIR):
         d.mkdir(parents=True, exist_ok=True)
+
+# ---- maps & routing ----
+MAP_TILE_URL = os.environ.get("MAP_TILE_URL", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
+MAP_TILE_ATTRIBUTION = os.environ.get("MAP_TILE_ATTRIBUTION", "&copy; OpenStreetMap contributors")
+ROAD_FACTOR = float(os.environ.get("ROAD_FACTOR", "1.3"))        # straight-line km x this ~= road km
+AVG_SPEED_KMH = float(os.environ.get("AVG_SPEED_KMH", "45"))
+STOP_MINUTES = int(os.environ.get("STOP_MINUTES", "25"))          # planned time in each store
+GEOCODER = os.environ.get("GEOCODER", "nominatim").strip().lower()   # nominatim | off
+GEOCODER_EMAIL = os.environ.get("GEOCODER_EMAIL", "")
+LEARN_STORE_GPS_MAX_ACCURACY_M = 150
+
+
+def tile_origin() -> str:
+    from urllib.parse import urlsplit
+    u = urlsplit(MAP_TILE_URL.replace("{s}", "a"))
+    host = u.netloc.replace("a.", "*.", 1) if "{s}" in MAP_TILE_URL else u.netloc
+    return f"{u.scheme}://{host}"
+
+PUBLIC_URL = os.environ.get("PUBLIC_URL", "").rstrip("/")   # e.g. https://audit.example.com (used in invite links)

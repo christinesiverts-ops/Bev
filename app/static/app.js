@@ -104,6 +104,35 @@
     update();
   });
 
+  // recap: print + share the PDF (Web Share API with files; falls back to opening the PDF)
+  $$("[data-print]").forEach((b) => b.addEventListener("click", () => window.print()));
+  $$("[data-share-pdf]").forEach((b) => b.addEventListener("click", async () => {
+    const url = b.dataset.sharePdf, title = b.dataset.shareTitle || "Recap";
+    try {
+      const res = await fetch(url, { credentials: "same-origin" });
+      const blob = await res.blob();
+      const name = (res.headers.get("content-disposition") || "").split('filename="')[1];
+      const file = new File([blob], name ? name.replace(/"$/, "") : "recap.pdf", { type: "application/pdf" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: title });
+        return;
+      }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    window.open(url, "_blank", "noopener");
+  }));
+
+  // invite link: copy + share
+  $$("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+    const src = $("[data-copy-source]");
+    try { await navigator.clipboard.writeText(src.value); } catch (e) { src.select(); document.execCommand("copy"); }
+    b.textContent = "Copied ✓"; setTimeout(() => { b.textContent = "Copy"; }, 2000);
+  }));
+  $$("[data-share-link]").forEach((b) => b.addEventListener("click", async () => {
+    const url = b.dataset.shareLink, text = b.dataset.shareText || "";
+    if (navigator.share) { try { await navigator.share({ title: document.title, text: text, url: url }); return; } catch (e) { if (e.name === "AbortError") return; } }
+    try { await navigator.clipboard.writeText(url); b.textContent = "Link copied ✓"; } catch (e) { window.prompt("Copy this link", url); }
+  }));
+
   // photo previews
   $$("[data-photos]").forEach((input) => {
     const strip = document.createElement("div");

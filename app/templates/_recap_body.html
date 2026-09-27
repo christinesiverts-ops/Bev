@@ -1,0 +1,40 @@
+{# expects r (VisitRecap), audience, compact #}
+{% set v = r.v %}
+{% if r.lines %}
+<div class="table-wrap print:shadow-none">
+<table class="data">
+  <thead><tr><th>Program</th><th>SKU</th><th class="num">Plan</th><th class="num">Shelf</th><th>Result</th><th>Tag</th><th>Location</th><th>Stock</th><th>Display</th></tr></thead>
+  <tbody>
+  {% for l in r.lines %}
+  <tr><td><span class="font-semibold">{{ l.program.brand }}</span><span class="hint block">{{ l.program.account }}</span></td><td>{{ l.sku }}</td>
+    <td class="num">{{ l.expected_price|money or '—' }}</td><td class="num">{{ l.observed_price|money or '—' }}</td>
+    <td>{% if l.price_check %}{{ badge(l.price_check) }}{% else %}—{% endif %}</td>
+    {% for b in [l.tag_ok, l.planogram_ok, l.in_stock_ok] %}<td>{% if b is none %}—{% elif b %}<span class="text-success">Yes</span>{% else %}<span class="font-semibold text-danger">No</span>{% endif %}</td>{% endfor %}
+    <td>{% if l.display == 'No' %}<span class="font-semibold text-danger">No</span>{% else %}{{ l.display or '—' }}{% endif %}</td></tr>
+  {% if l.discrepancy_type != 'None' or l.notes %}<tr><td colspan="9" class="!pt-0 text-[13px]">{% if l.discrepancy_type != 'None' %}<span class="pill pill-danger">{{ l.discrepancy_type }}</span> {% endif %}<span class="text-muted-foreground">{{ l.notes }}</span></td></tr>{% endif %}
+  {% endfor %}
+  </tbody></table></div>
+{% elif not compact %}<p class="hint">No shelf checks logged.</p>{% endif %}
+
+{% if r.wins %}
+<h3 class="mb-2 mt-5 font-semibold">Wins</h3>
+<div class="card divide-rows px-4 print:shadow-none">{% for w in r.wins %}{{ win_row(w) }}{% endfor %}</div>
+{% endif %}
+{% if r.placement_checks %}
+<h3 class="mb-2 mt-5 font-semibold">Displays &amp; placements re-checked</h3>
+<ul class="space-y-1 text-sm">{% for c in r.placement_checks %}<li>{{ badge('Still up' if c.status == 'Active' else 'Gone') }} {{ c.win.brand }} · {{ c.win.win_type }}</li>{% endfor %}</ul>
+{% endif %}
+{% set issues = r.raised + ([] if compact else r.open_issues) %}
+{% if issues %}
+<h3 class="mb-2 mt-5 font-semibold">Follow-ups &amp; next steps</h3>
+<div class="space-y-2">{% for i in issues %}
+  <div class="rounded-xl border border-border p-3 text-sm"><div class="flex flex-wrap items-center gap-2">{{ badge(i.status) }}<span class="font-semibold">{{ i.discrepancy_type }}</span>
+    {% if i.due_date %}<span class="hint">due {{ i.due_date|d }}</span>{% endif %}{% if audience == 'team' and i.owner %}<span class="hint">· {{ i.owner.display_name }}</span>{% endif %}</div>
+    <p class="mt-1">{{ i.description }}</p>{% if i.action %}<p class="mt-1"><span class="eyebrow">Next step</span> {{ i.action }}</p>{% endif %}</div>
+{% endfor %}</div>
+{% endif %}
+{% if v.notes and audience == 'team' %}<h3 class="mb-2 mt-5 font-semibold">Visit notes</h3><p class="whitespace-pre-line text-sm">{{ v.notes }}</p>{% endif %}
+{% if r.photos and not compact %}
+<h3 class="mb-2 mt-5 font-semibold">Photos</h3>
+<div class="grid grid-cols-3 gap-2 sm:grid-cols-4">{% for ph in r.photos[:12] %}<a href="/photos/{{ ph.id }}" target="_blank" rel="noopener" class="block overflow-hidden rounded-xl border border-border"><img class="aspect-square w-full object-cover" src="/photos/{{ ph.id }}" alt="Visit photo" loading="lazy"></a>{% endfor %}</div>
+{% endif %}

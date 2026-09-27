@@ -29,8 +29,11 @@ class User(Base):
     locked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     session_version: Mapped[int] = mapped_column(Integer, default=1)
     theme: Mapped[str] = mapped_column(String(8), default="auto")   # auto | light | dark
+    manager_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)  # reports to
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     last_login: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    manager: Mapped["User | None"] = relationship(remote_side="User.id", foreign_keys=[manager_id])
 
     @property
     def effective_theme(self) -> str:
@@ -334,3 +337,62 @@ class Setting(Base):
     __tablename__ = "settings"
     key: Mapped[str] = mapped_column(String(80), primary_key=True)
     value: Mapped[str] = mapped_column(Text, default="")
+
+
+class Route(Base):
+    """A planned day of store stops for one rep."""
+    __tablename__ = "routes"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    route_date: Mapped[date] = mapped_column(Date, index=True)
+    assignee_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    start_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    start_lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    assignee: Mapped[User] = relationship(foreign_keys=[assignee_id])
+    created_by: Mapped[User] = relationship(foreign_keys=[created_by_id])
+    stops: Mapped[list["RouteStop"]] = relationship(back_populates="route", cascade="all, delete-orphan",
+                                                    order_by="RouteStop.position")
+
+
+class RouteStop(Base):
+    __tablename__ = "route_stops"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    route_id: Mapped[int] = mapped_column(ForeignKey("routes.id", ondelete="CASCADE"), index=True)
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    reason: Mapped[str] = mapped_column(String(200), default="")   # why this stop is on the route
+
+    route: Mapped[Route] = relationship(back_populates="stops")
+    store: Mapped[Store] = relationship()
+
+
+class Invite(Base):
+    """Single-use sign-up link a manager sends to a new team member. Only a hash of the token is stored."""
+    __tablename__ = "invites"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    role: Mapped[str] = mapped_column(String(16), default="rep")
+    name_hint: Mapped[str] = mapped_column(String(120), default="")
+    created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    used_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    created_by: Mapped[User] = relationship(foreign_keys=[created_by_id])
+    used_by: Mapped[User | None] = relationship(foreign_keys=[used_by_id])
+
+    @property
+    def state(self) -> str:
+        if self.used_at:
+            return "Used"
+        if self.revoked_at:
+            return "Revoked"
+        if self.expires_at < datetime.utcnow():
+            return "Expired"
+        return "Pending"

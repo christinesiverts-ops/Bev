@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import config, pricing
-from ..common import flash, opt_date, opt_float, opt_int, redirect, render, s, today, yn
+from ..common import flash, opt_coord, opt_date, opt_float, opt_int, redirect, render, s, today, yn
 from ..db import get_db
 from ..models import DISPLAY_CHOICES, WIN_LOCATIONS, WIN_TYPES, AuditLine, Issue, IssueUpdate, Photo, Program, Store, User, Visit
 from ..photos import save_upload, uploads_from
@@ -67,7 +67,7 @@ async def visit_create(request: Request, user: User = Depends(require_field), db
     if not st:
         raise HTTPException(400, "Pick a store first.")
     try:
-        lat, lng, acc = opt_float(form.get("lat")), opt_float(form.get("lng")), opt_float(form.get("accuracy"))
+        lat, lng, acc = opt_coord(form.get("lat")), opt_coord(form.get("lng")), opt_float(form.get("accuracy"))
     except ValueError:
         lat = lng = acc = None
     if lat is not None and not (-90 <= lat <= 90 and -180 <= (lng or 0) <= 180):
@@ -76,6 +76,11 @@ async def visit_create(request: Request, user: User = Depends(require_field), db
               checkin_accuracy_m=acc)
     if lat is not None and lng is not None and st.lat is not None and st.lng is not None:
         v.distance_m = round(haversine_m(lat, lng, st.lat, st.lng))
+    elif (lat is not None and lng is not None and st.lat is None and acc is not None
+          and acc <= config.LEARN_STORE_GPS_MAX_ACCURACY_M):
+        st.lat, st.lng = lat, lng          # first accurate check-in teaches the map where the store is
+        v.distance_m = 0
+        log(db, user, "learn_location", "store", st.id, f"{st.label} from check-in (±{acc:.0f} m)")
     db.add(v)
     db.flush()
     log(db, user, "check_in", "visit", v.id, f"{st.label} gps={'yes' if lat is not None else 'no'} dist={v.distance_m}")
@@ -266,8 +271,8 @@ def visit_checkout(vid: int, request: Request, user: User = Depends(require_fiel
         v.checked_out_at = datetime.utcnow()
         log(db, user, "check_out", "visit", v.id, v.store.label)
         db.commit()
-    flash(request, f"Checked out of {v.store.label}.")
-    return redirect("/")
+    flash(request, f"Checked out of {v.store.label}. Here's your recap to share.")
+    return redirect(f"/visits/{v.id}/recap")
 
 
 @router.post("/visits/{vid}/delete", dependencies=[Depends(csrf_protect)])

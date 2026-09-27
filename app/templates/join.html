@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% block title %}Join the team{% endblock %}{% block main %}min-h-screen{% endblock %}
+{% block content %}
+<div class="flex min-h-screen items-center justify-center px-6 py-12">
+  <div class="w-full max-w-md animate-rise">
+    {% if company_logo() %}<span class="logo-plate mb-6 h-14 w-28"><img src="{{ company_logo() }}" alt="{{ site().company_name }}"></span>
+    {% else %}<span class="mb-6 grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground">{{ icon('users', 'size-6') }}</span>{% endif %}
+    {% if invalid %}
+      <h1 class="font-display text-3xl font-semibold">This invite link doesn't work</h1>
+      <p class="mt-2 text-muted-foreground">It may have expired, been used already, or been revoked. Ask your manager for a new link.</p>
+      <a class="btn mt-6" href="/login">Go to sign in</a>
+    {% else %}
+      <p class="eyebrow">{{ site().company_name }}</p>
+      <h1 class="font-display text-3xl font-semibold">Join {{ inv.created_by.display_name.split(' ')[0] }}'s team</h1>
+      <p class="mt-2 text-muted-foreground">Create your account. You'll join as a <strong class="text-foreground">{{ inv.role }}</strong> reporting to {{ inv.created_by.display_name }}.</p>
+      {% if current %}<p class="toast toast-warn mt-4">You're signed in as {{ current.display_name }}. Creating an account here will switch you to the new account.</p>{% endif %}
+      {% if error %}<div class="toast toast-bad mt-4" role="alert"><span class="text-danger">{{ icon('alert') }}</span><span>{{ error }}</span></div>{% endif %}
+      <form method="post" class="mt-6">{{ csrf_field() }}
+        <label class="field"><span class="label">Your name</span><input class="input" name="display_name" required autocomplete="name" value="{{ form.display_name if form else inv.name_hint }}"></label>
+        <label class="field"><span class="label">Username</span><input class="input" name="username" required autocapitalize="none" autocomplete="username" pattern="[A-Za-z0-9._\-]+" value="{{ form.username if form else '' }}" placeholder="e.g. cmorgan"></label>
+        <label class="field"><span class="label">Password</span><input class="input" type="password" name="password" required minlength="10" autocomplete="new-password"></label>
+        <label class="field"><span class="label">Confirm password</span><input class="input" type="password" name="confirm" required minlength="10" autocomplete="new-password"></label>
+        <p class="hint mb-4">At least 10 characters, with upper- and lower-case letters and a number.</p>
+        <button class="btn btn-primary btn-lg btn-block" data-loading="Creating account…">Create my account</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

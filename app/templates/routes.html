@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% block title %}Routes{% endblock %}
+{% block content %}
+<div class="section-title flex-wrap"><div><h1 class="font-display text-3xl font-semibold">Routes</h1><p class="hint">Planned store runs. Pick stops on the map to plan a new one.</p></div>
+  <a class="btn btn-primary" href="/map">{{ icon('pin', 'size-4') }}Plan on map</a></div>
+{% if routes %}
+<div class="grid gap-3 md:grid-cols-2">
+{% for r in routes %}{% set v = views.get(r.id) %}
+<a class="card block p-4 text-foreground no-underline transition hover:shadow-lift hover:no-underline" href="/routes/{{ r.id }}">
+  <div class="flex items-start justify-between gap-3">
+    <div class="min-w-0"><p class="font-semibold">{{ r.name }}</p><p class="hint">{{ r.route_date.strftime('%a') }} {{ r.route_date|d }} · {{ r.assignee.display_name }}</p></div>
+    {% if r.route_date == t %}<span class="pill pill-info">Today</span>{% elif r.route_date > t %}<span class="pill pill-muted">Upcoming</span>{% endif %}
+  </div>
+  {% if v %}
+  <div class="mt-3 flex items-center gap-3"><span class="bar flex-1"><span class="w-pct-{{ ((v.done / r.stops|length) * 20)|round(0, 'floor')|int * 5 if r.stops else 0 }} bg-success"></span></span>
+    <span class="text-sm font-semibold tabular-nums">{{ v.done }}/{{ r.stops|length }}</span></div>
+  <p class="hint mt-1">{{ v.summary.miles }} mi · ~{{ (v.summary.total_min / 60)|round(1) }} h with stops</p>
+  {% endif %}
+</a>
+{% endfor %}
+</div>
+{% else %}{% call empty('No routes yet', 'Open the map, pick the stores you need to hit, and plan the fastest order.', 'pin') %}<a class="btn btn-primary mt-4" href="/map">Open map</a>{% endcall %}{% endif %}
+{% endblock %}

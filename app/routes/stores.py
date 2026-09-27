@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import pricing
-from ..common import flash, opt_float, redirect, render, s, today
+from ..common import flash, opt_coord, redirect, render, s, today
 from ..db import get_db
 from ..models import Issue, Program, Store, User, Visit, Win
 from ..security import csrf_protect, current_user, log, require_field, require_manager
@@ -59,7 +59,7 @@ def _apply_store(st: Store, form) -> None:
         raw = form.get(name)
         if name in ("lat", "lng"):
             try:
-                setattr(st, name, opt_float(raw) if s(raw) else None)
+                setattr(st, name, opt_coord(raw) if s(raw) else None)
             except ValueError as e:
                 raise HTTPException(400, f"{label}: {e}")
         else:
@@ -140,7 +140,7 @@ async def store_import(request: Request, user: User = Depends(require_manager), 
         for k in ("lat", "lng"):
             try:
                 if s(rec.get(k)):
-                    setattr(st, k, opt_float(rec[k]))
+                    setattr(st, k, opt_coord(rec[k]))
             except ValueError:
                 pass
     log(db, user, "import", "store", None, f"added={added} updated={updated} skipped={skipped}")

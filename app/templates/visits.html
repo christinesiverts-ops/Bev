@@ -12,7 +12,7 @@
 </form>
 {% if visits %}
 <div class="table-wrap"><table class="data">
-  <thead><tr><th>Date</th><th>Store</th><th>Rep</th><th class="num">Checks</th><th class="num">Wins</th><th>Issues</th><th>GPS</th><th>Status</th></tr></thead>
+  <thead><tr><th>Date</th><th>Store</th><th>Rep</th><th class="num">Checks</th><th class="num">Wins</th><th>Issues</th><th>GPS</th><th>Status</th><th></th></tr></thead>
   <tbody>
   {% for v in visits %}
   {% set probs = v.lines|rejectattr('discrepancy_type', 'equalto', 'None')|list %}
@@ -22,7 +22,8 @@
     <td class="num">{{ v.lines|length }}</td><td class="num">{% if v.wins %}<span class="font-semibold text-accent-text">{{ v.wins|length }}</span>{% else %}0{% endif %}</td>
     <td>{% if probs %}<span class="pill pill-danger">{{ probs|length }}</span>{% endif %}</td>
     <td>{% if v.checkin_lat is none %}<span class="pill pill-warning">None</span>{% elif v.distance_m is not none and v.distance_m > gps_flag %}<span class="pill pill-danger">{{ (v.distance_m/1000)|round(1) }} km</span>{% elif v.distance_m is not none %}<span class="pill pill-success">At store</span>{% else %}<span class="pill pill-muted">Captured</span>{% endif %}</td>
-    <td>{% if v.checked_out_at %}<span class="pill pill-muted">Done</span>{% else %}<span class="pill pill-info">In progress</span>{% endif %}</td></tr>
+    <td>{% if v.checked_out_at %}<span class="pill pill-muted">Done</span>{% else %}<span class="pill pill-info">In progress</span>{% endif %}</td>
+    <td><a class="font-semibold" href="/visits/{{ v.id }}/recap">Recap</a></td></tr>
   {% endfor %}
   </tbody></table></div>
 {% else %}{% call empty('No visits match', 'Change the filters, or start a visit from Check in.', 'list') %}{% endcall %}{% endif %}

@@ -5,6 +5,26 @@
   <h1 class="font-display text-3xl font-semibold sm:text-4xl">{{ greeting() }}, {{ user.display_name.split(' ')[0] }}</h1>
 </header>
 
+{% if route and route_v %}
+<section class="card mb-5 overflow-hidden animate-rise">
+  <div class="flex items-center justify-between gap-3 p-4 pb-3">
+    <div><p class="eyebrow">Today's route</p><p class="font-semibold">{{ route.name }}</p></div>
+    <a class="btn btn-sm" href="/routes/{{ route.id }}">{{ icon('pin', 'size-4') }}Map</a>
+  </div>
+  <div class="flex items-center gap-3 px-4 pb-3"><span class="bar flex-1"><span class="w-pct-{{ ((route_v.done / route.stops|length) * 20)|round(0, 'floor')|int * 5 if route.stops else 0 }} bg-success"></span></span>
+    <span class="text-sm font-semibold tabular-nums">{{ route_v.done }}/{{ route.stops|length }} stops</span></div>
+  {% if route_v.next %}{% set nst = route_v.next.stop.store %}
+  <div class="flex items-center gap-3 border-t border-border bg-raised p-4">
+    {{ chain_mark(nst.chain, 'h-10 w-16') }}
+    <div class="min-w-0 flex-1"><p class="eyebrow">Next stop</p><p class="truncate font-semibold">{{ nst.chain }} #{{ nst.store_number }}</p>
+      <p class="hint truncate">{% if route_v.next.leg and route_v.next.leg.km %}{{ (route_v.next.leg.km * 0.621371)|round(1) }} mi · {% endif %}{{ route_v.next.stop.reason or nst.city }}</p></div>
+    {% if nst.lat is not none %}<a class="btn btn-sm" href="https://www.google.com/maps/dir/?api=1&destination={{ '%.6f'|format(nst.lat) }},{{ '%.6f'|format(nst.lng) }}" target="_blank" rel="noopener">Go</a>{% endif %}
+    {% if user.can_log_visits and not open_visit %}<a class="btn btn-primary btn-sm" href="/visits/new?store_id={{ nst.id }}">Check in</a>{% endif %}
+  </div>
+  {% else %}<p class="border-t border-border bg-raised p-4 text-sm font-semibold text-success">✓ Route complete. Nice work.</p>{% endif %}
+</section>
+{% endif %}
+
 {% if user.can_log_visits %}
   {% if open_visit %}
   <a href="/visits/{{ open_visit.id }}" class="mb-5 block animate-rise rounded-3xl bg-primary p-5 text-primary-foreground no-underline shadow-lift hover:no-underline">
@@ -51,7 +71,7 @@
 
 {% if team %}
 <section class="card-pad mb-6">
-  <div class="section-title"><h2>Team this week</h2><a class="text-sm font-semibold" href="/dashboard">Dashboard →</a></div>
+  <div class="section-title"><h2>Team this week</h2><span class="flex gap-3"><a class="text-sm font-semibold" href="/team">Team recap →</a><a class="text-sm font-semibold" href="/dashboard">Dashboard →</a></span></div>
   <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
     <div><p class="eyebrow">Visits</p><p class="display-num text-3xl">{{ team.visits_week }}</p></div>
     <div><p class="eyebrow">Wins</p><p class="display-num text-3xl text-accent-text">{{ team.wins_week }}</p></div>
@@ -96,7 +116,7 @@
     <div class="divide-rows">{% for w in recent_wins %}{{ win_row(w, show_store=True) }}{% else %}<p class="hint py-3">No wins logged yet. New displays, cold placements and new SKUs show up here.</p>{% endfor %}</div>
   </section>
   <section class="card-pad">
-    <div class="section-title"><h2>My recent visits</h2><a class="text-sm font-semibold" href="/visits?rep={{ user.id }}">All</a></div>
+    <div class="section-title"><h2>My recent visits</h2><span class="flex gap-3"><a class="text-sm font-semibold" href="/recap/day">Today's recap</a><a class="text-sm font-semibold" href="/visits?rep={{ user.id }}">All</a></span></div>
     <div class="-mx-3 divide-rows">
     {% for v in my_visits %}
       <a class="row-link" href="/visits/{{ v.id }}">{{ chain_mark(v.store.chain, 'h-9 w-14') }}

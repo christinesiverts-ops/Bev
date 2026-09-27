@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% block title %}Stores{% endblock %}
 {% block content %}
 <div class="section-title flex-wrap"><h1 class="font-display text-3xl font-semibold">Stores</h1>
-  <div class="flex gap-2">{% if user.can_log_visits %}<a class="btn btn-sm" href="/stores/new">{{ icon('plus', 'size-4') }}Add store</a>{% endif %}
+  <div class="flex gap-2"><a class="btn btn-sm" href="/map">{{ icon('pin', 'size-4') }}Map</a>{% if user.can_log_visits %}<a class="btn btn-sm" href="/stores/new">{{ icon('plus', 'size-4') }}Add store</a>{% endif %}
   {% if user.is_manager %}<a class="btn btn-sm" href="/stores/import">Import list</a>{% endif %}</div></div>
 <form class="mb-5 flex flex-wrap gap-2" method="get">
   <div class="relative min-w-56 flex-1"><span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">{{ icon('search') }}</span>

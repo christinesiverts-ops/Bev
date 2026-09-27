@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% block title %}Recap · {{ r.v.store.label }}{% endblock %}{% block main %}page-narrow !max-w-4xl{% endblock %}
+{% block content %}
+{% set v = r.v %}
+<div class="no-print mb-5 flex flex-wrap items-center gap-2">
+  <a href="/visits/{{ v.id }}" class="btn btn-ghost btn-sm">{{ icon('back', 'size-4') }}Visit</a>
+  <div class="seg ml-auto" role="group" aria-label="Recap for">
+    <a class="rounded-lg px-3 py-2 text-sm font-semibold no-underline {{ 'bg-card text-foreground shadow-sm' if audience == 'team' else 'text-muted-foreground' }}" href="?audience=team">Team copy</a>
+    <a class="rounded-lg px-3 py-2 text-sm font-semibold no-underline {{ 'bg-card text-foreground shadow-sm' if audience == 'store' else 'text-muted-foreground' }}" href="?audience=store">Store / distributor copy</a>
+  </div>
+</div>
+<div class="no-print mb-5 grid grid-cols-3 gap-2">
+  <button type="button" class="btn btn-primary" data-share-pdf="/visits/{{ v.id }}/recap.pdf?audience={{ audience }}" data-share-title="Visit recap · {{ v.store.label }}">{{ icon('refresh', 'size-4 rotate-90') }}Share PDF</button>
+  <a class="btn" href="/visits/{{ v.id }}/recap.pdf?audience={{ audience }}" target="_blank" rel="noopener">{{ icon('note', 'size-4') }}Open PDF</a>
+  <button type="button" class="btn" data-print>{{ icon('clipboard', 'size-4') }}Print</button>
+</div>
+
+<article class="card-pad print:border-0 print:p-0 print:shadow-none">
+  <header class="flex items-start justify-between gap-4 border-b border-border pb-4">
+    <div>
+      <p class="eyebrow">{{ site().company_name }} · Visit recap</p>
+      <h1 class="mt-1 font-display text-3xl font-semibold">{{ v.store.chain }} #{{ v.store.store_number }}</h1>
+      <p class="hint">{{ v.store.address }} {{ v.store.city }} {{ v.store.state }}</p>
+      <p class="mt-1 text-sm">{{ v.visit_date.strftime('%A, %B %-d, %Y') }} · {{ v.rep.display_name }}
+        {% if audience == 'team' %}<span class="text-muted-foreground">· in {{ v.checked_in_at|local }}{% if v.checked_out_at %}, out {{ v.checked_out_at|local }}{% endif %}</span>{% endif %}</p>
+    </div>
+    <div class="flex flex-col items-end gap-2">{{ chain_mark(v.store.chain, 'h-12 w-20') }}{% if company_logo() %}<span class="logo-plate h-10 w-20"><img src="{{ company_logo() }}" alt=""></span>{% endif %}</div>
+  </header>
+  <div class="my-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="rounded-xl bg-raised p-3"><p class="eyebrow">Programs checked</p><p class="display-num text-3xl">{{ r.stats.checks }}</p></div>
+    <div class="rounded-xl bg-raised p-3"><p class="eyebrow">Price match</p><p class="display-num text-3xl">{% if r.stats.priced %}{{ r.stats.match }}<span class="text-lg text-muted-foreground">/{{ r.stats.priced }}</span>{% else %}—{% endif %}</p></div>
+    <div class="rounded-xl bg-raised p-3"><p class="eyebrow">Issues found</p><p class="display-num text-3xl {{ 'text-danger' if r.stats.issues }}">{{ r.stats.issues }}</p></div>
+    <div class="rounded-xl bg-raised p-3"><p class="eyebrow">Wins</p><p class="display-num text-3xl text-accent-text">{{ r.stats.wins }}</p></div>
+  </div>
+  {% set compact = False %}{% include "_recap_body.html" %}
+</article>
+<p class="hint no-print mt-4">The store / distributor copy leaves out internal notes, follow-up owners and check-in times.</p>
+{% endblock %}

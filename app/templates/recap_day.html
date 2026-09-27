@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% block title %}Day recap · {{ d.rep.display_name }}{% endblock %}{% block main %}page-narrow !max-w-4xl{% endblock %}
+{% block content %}
+<form method="get" class="no-print mb-4 flex flex-wrap items-end gap-2">
+  <label><span class="label">Person</span><select class="input w-auto" name="rep" data-autosubmit>{% for u in team %}<option value="{{ u.id }}" {% if u.id == d.rep.id %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
+  <label><span class="label">Day</span><input class="input w-auto" type="date" name="day" value="{{ d.day.isoformat() }}" data-autosubmit></label>
+  <div class="ml-auto flex gap-2">
+    <button type="button" class="btn btn-primary" data-share-pdf="/recap/day.pdf?rep={{ d.rep.id }}&day={{ d.day.isoformat() }}" data-share-title="Day recap · {{ d.rep.display_name }}">Share PDF</button>
+    <a class="btn" href="/recap/day.pdf?rep={{ d.rep.id }}&day={{ d.day.isoformat() }}" target="_blank" rel="noopener">Open PDF</a>
+    <button type="button" class="btn" data-print>Print</button>
+  </div>
+</form>
+<article class="card-pad print:border-0 print:p-0 print:shadow-none">
+  <p class="eyebrow">{{ site().company_name }} · Day recap</p>
+  <h1 class="mt-1 font-display text-3xl font-semibold">{{ d.rep.display_name }}</h1>
+  <p class="hint">{{ d.day.strftime('%A, %B %-d, %Y') }}</p>
+  <div class="my-5 grid grid-cols-3 gap-3 sm:grid-cols-6">
+    <div class="rounded-xl bg-raised p-3"><p class="eyebrow">Visits</p><p class="display-num text-2xl">{{ d.totals.visits }}</p></div>
+    {% if d.totals.route_stops is defined %}<div class="rounded-xl bg-raised p-3"><p class="eyebrow">Route</p><p class="display-num text-2xl">{{ d.totals.route_done }}<span class="text-base text-muted-foreground">/{{ d.totals.route_stops }}</span></p></div>{% endif %}
+    <div class="rounded-xl bg-raised p-3"><p class="eyebrow">Checks</p><p class="display-num text-2xl">{{ d.totals.checks }}</p></div>
+    <div class="rounded-xl bg-raised p-3"><p class="eyebrow">Price match</p><p class="display-num text-2xl">{% if d.totals.priced %}{{ d.totals.match }}<span class="text-base text-muted-foreground">/{{ d.totals.priced }}</span>{% else %}—{% endif %}</p></div>
+    <div class="rounded-xl bg-raised p-3"><p class="eyebrow">Issues</p><p class="display-num text-2xl {{ 'text-danger' if d.totals.issues }}">{{ d.totals.issues }}</p></div>
+    <div class="rounded-xl bg-raised p-3"><p class="eyebrow">Wins</p><p class="display-num text-2xl text-accent-text">{{ d.totals.wins }}</p></div>
+  </div>
+  {% for r in d.visits %}
+  <section class="mt-6 border-t border-border pt-5">
+    <div class="mb-3 flex items-center gap-3">{{ chain_mark(r.v.store.chain, 'h-9 w-14') }}
+      <div class="min-w-0 flex-1"><a class="font-semibold text-foreground" href="/visits/{{ r.v.id }}">{{ r.v.store.label }}</a>
+        <p class="hint">in {{ r.v.checked_in_at|local }}{% if r.v.checked_out_at %} · out {{ r.v.checked_out_at|local }}{% endif %} · {{ r.stats.checks }} checks · {{ r.stats.wins }} wins</p></div>
+      <a class="no-print btn btn-sm" href="/visits/{{ r.v.id }}/recap">Recap</a></div>
+    {% set audience = 'team' %}{% set compact = True %}{% include "_recap_body.html" %}
+  </section>
+  {% else %}{% call empty('No visits on this day', 'Pick another day or person above.', 'calendar') %}{% endcall %}{% endfor %}
+  {% if d.route %}{% set done_ids = d.visits|map(attribute='v.store_id')|list %}{% set missed = d.route.stops|rejectattr('store_id', 'in', done_ids)|list %}
+  {% if missed %}<section class="mt-6 border-t border-border pt-5"><h3 class="mb-2 font-semibold">Route stops not visited</h3>
+    <ul class="space-y-1 text-sm">{% for s_ in missed %}<li>{{ s_.store.label }}{% if s_.reason %} <span class="hint">· {{ s_.reason }}</span>{% endif %}</li>{% endfor %}</ul></section>{% endif %}{% endif %}
+</article>
+{% endblock %}

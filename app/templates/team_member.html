@@ -1,0 +1,58 @@
+{% extends "base.html" %}{% block title %}{{ m.u.display_name }}{% endblock %}
+{% macro pct(v) %}{% if v is none %}—{% else %}{{ (v*100)|round(0)|int }}%{% endif %}{% endmacro %}
+{% block content %}{% set u = m.u %}
+<a href="/team" class="mb-3 inline-flex items-center gap-1 text-sm font-semibold">{{ icon('back', 'size-4') }}Team</a>
+<section class="card mb-5 flex flex-wrap items-center gap-4 p-5">
+  <span class="grid size-14 place-items-center rounded-full bg-primary text-lg font-bold text-primary-foreground">{{ u.initials }}</span>
+  <div class="min-w-0 flex-1">
+    <h1 class="font-display text-3xl font-semibold">{{ u.display_name }}</h1>
+    <p class="hint capitalize">{{ u.role }}{% if u.manager %} · reports to {{ u.manager.display_name }}{% endif %} · {% if m.open_visit %}<span class="font-semibold normal-case text-success">in {{ m.open_visit.store.label }} now</span>{% else %}<span class="normal-case">active {{ m.last_active_ago }}</span>{% endif %}</p>
+  </div>
+  <div class="flex flex-wrap gap-2"><a class="btn btn-primary" href="/recap/day?rep={{ u.id }}">Day recap</a><a class="btn" href="/tasks?assignee={{ u.id }}">Tasks</a><a class="btn" href="/wins?rep={{ u.id }}">Wins</a></div>
+</section>
+
+<div class="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="kpi"><span class="eyebrow">Visits this week</span><span class="n">{{ m.week.visits }}</span><span class="hint">{{ m.today.visits }} today</span></div>
+  <div class="kpi"><span class="eyebrow">Wins this week</span><span class="n text-accent-text">{{ m.week.wins }}</span></div>
+  <div class="kpi"><span class="eyebrow">Price match (week)</span><span class="n">{{ pct(m.week.match) }}</span></div>
+  <div class="kpi {{ 'border-danger/40' if m.overdue }}"><span class="eyebrow">Open follow-ups</span><span class="n {{ 'text-danger' if m.overdue }}">{{ m.open }}</span><span class="hint">{{ m.overdue }} overdue</span></div>
+</div>
+
+<section class="card-pad mb-5">
+  <h2 class="mb-3">Visits, last 14 days</h2>
+  <div class="flex h-28 items-end gap-1.5">
+    {% for d_ in days %}{% set n = per_day[d_] %}
+    <a class="group flex flex-1 flex-col items-center gap-1 no-underline" href="/recap/day?rep={{ u.id }}&day={{ d_.isoformat() }}" title="{{ d_|d }}: {{ n }} visits">
+      <span class="flex h-20 w-full items-end"><span class="w-full rounded-t-md {{ 'bg-primary' if n else 'bg-muted' }} h-pct-{{ ((n / max_day) * 20)|round(0, 'ceil')|int * 5 if n else 5 }} group-hover:opacity-80"></span></span>
+      <span class="text-[10px] text-muted-foreground">{{ d_.strftime('%a')[0] }}</span></a>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="grid gap-5 lg:grid-cols-2">
+  <section class="card-pad">
+    <h2 class="mb-2">Recent visits</h2>
+    {% for v in visits %}<div class="flex items-center gap-3 border-b border-border py-2.5 last:border-0">{{ chain_mark(v.store.chain, 'h-8 w-12') }}
+      <a class="min-w-0 flex-1 text-foreground" href="/visits/{{ v.id }}"><span class="block truncate font-semibold">{{ v.store.label }}</span><span class="hint">{{ v.visit_date|d }} · {{ v.lines|length }} checks · {{ v.wins|length }} wins</span></a>
+      <a class="btn btn-ghost btn-sm" href="/visits/{{ v.id }}/recap">Recap</a></div>
+    {% else %}<p class="hint">No visits yet.</p>{% endfor %}
+  </section>
+  <section class="card-pad">
+    <h2 class="mb-2">Activity</h2>
+    <ol class="relative space-y-3 border-l border-border pl-5">
+    {% for a in activity %}<li class="relative"><span class="absolute -left-[1.6rem] top-1.5 size-2.5 rounded-full bg-accent"></span>
+      <p class="text-sm"><span class="font-semibold">{{ a.label }}</span>{% if a.detail %} · {% if a.link %}<a href="{{ a.link }}">{{ a.detail }}</a>{% else %}{{ a.detail }}{% endif %}{% endif %}</p><p class="hint">{{ a.at|local }}</p></li>
+    {% else %}<li class="hint">No activity yet.</li>{% endfor %}
+    </ol>
+  </section>
+  <section class="card-pad">
+    <h2 class="mb-2">Open follow-ups</h2>
+    {% for i in issues %}<a class="block border-b border-border py-2.5 text-foreground last:border-0" href="/issues/{{ i.id }}">{{ badge(i.status) }} <span class="font-semibold">{{ i.discrepancy_type }}</span> <span class="hint">· {{ i.store.label }}{% if i.due_date %} · due <span class="{{ 'font-semibold text-danger' if i.due_date < t }}">{{ i.due_date|d }}</span>{% endif %}</span></a>
+    {% else %}<p class="hint">None.</p>{% endfor %}
+  </section>
+  <section class="card-pad">
+    <h2 class="mb-2">Recent wins</h2>
+    <div class="divide-rows">{% for w in wins %}{{ win_row(w, show_store=True) }}{% else %}<p class="hint">No wins yet.</p>{% endfor %}</div>
+  </section>
+</div>
+{% endblock %}

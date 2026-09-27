@@ -1,0 +1,93 @@
+{% extends "base.html" %}{% block title %}Team{% endblock %}
+{% macro pct(v) %}{% if v is none %}—{% else %}{{ (v*100)|round(0)|int }}%{% endif %}{% endmacro %}
+{% block content %}
+<div class="section-title flex-wrap">
+  <div><p class="eyebrow">{{ t.strftime('%A · %B %-d') }}</p><h1 class="font-display text-3xl font-semibold sm:text-4xl">Your team today</h1></div>
+  <div class="flex flex-wrap gap-2">
+    <div class="seg" role="group" aria-label="Show">
+      <a class="rounded-lg px-3 py-2 text-sm font-semibold no-underline {{ 'bg-card text-foreground shadow-sm' if scope == 'mine' else 'text-muted-foreground' }}" href="?scope=mine">My reports</a>
+      <a class="rounded-lg px-3 py-2 text-sm font-semibold no-underline {{ 'bg-card text-foreground shadow-sm' if scope == 'all' else 'text-muted-foreground' }}" href="?scope=all">Everyone</a>
+    </div>
+    <a class="btn btn-primary" href="#invite">{{ icon('plus', 'size-4') }}Invite</a>
+  </div>
+</div>
+
+{% if not members %}
+  {% call empty('No team members here yet', 'Send an invite link below. When they sign up, they report to you and show up here.', 'users') %}{% endcall %}
+{% endif %}
+<div class="grid gap-4 xl:grid-cols-2">
+{% for m in members %}{% set u = m.u %}
+<article class="card overflow-hidden">
+  <div class="flex items-center gap-3 p-4">
+    <span class="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{{ u.initials }}</span>
+    <div class="min-w-0 flex-1">
+      <a class="font-semibold text-foreground" href="/team/{{ u.id }}">{{ u.display_name }}</a>
+      <p class="hint">{% if m.open_visit %}<span class="font-semibold text-success">● In store now</span>{% else %}Active {{ m.last_active_ago }}{% endif %}{% if u.manager %} · reports to {{ u.manager.display_name }}{% endif %}</p>
+    </div>
+    <a class="btn btn-sm" href="/recap/day?rep={{ u.id }}">Day recap</a>
+  </div>
+  {% if m.open_visit %}
+  <a class="flex items-center gap-3 border-y border-border bg-success/5 px-4 py-3 text-foreground no-underline hover:no-underline" href="/visits/{{ m.open_visit.id }}">
+    {{ chain_mark(m.open_visit.store.chain, 'h-9 w-14') }}
+    <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ m.open_visit.store.label }}</span>
+      <span class="hint">since {{ m.open_visit.checked_in_at|local }} · {{ m.open_visit.lines|length }} checks · {{ m.open_visit.wins|length }} wins</span></span>
+    <span class="text-muted-foreground">{{ icon('chev') }}</span></a>
+  {% endif %}
+  {% if m.route %}
+  <a class="block border-b border-border px-4 py-3 text-foreground no-underline hover:bg-raised hover:no-underline" href="/routes/{{ m.route.id }}">
+    <span class="flex items-center justify-between gap-3 text-sm"><span class="font-semibold">Route: {{ m.route.name }}</span><span class="tabular-nums">{{ m.route_v.done }}/{{ m.route.stops|length }}</span></span>
+    <span class="bar mt-2 block"><span class="w-pct-{{ ((m.route_v.done / m.route.stops|length) * 20)|round(0, 'floor')|int * 5 if m.route.stops else 0 }} bg-success"></span></span>
+    {% if m.route_v.next %}<span class="hint mt-1 block">Next: {{ m.route_v.next.stop.store.label }}</span>{% endif %}</a>
+  {% endif %}
+  <div class="grid grid-cols-4 divide-x divide-border border-b border-border text-center">
+    <div class="p-3"><p class="eyebrow">Today</p><p class="display-num text-2xl">{{ m.today.visits }}</p><p class="hint">visits</p></div>
+    <div class="p-3"><p class="eyebrow">Wins wk</p><p class="display-num text-2xl text-accent-text">{{ m.week.wins }}</p><p class="hint">{{ m.today.wins }} today</p></div>
+    <div class="p-3"><p class="eyebrow">Match wk</p><p class="display-num text-2xl">{{ pct(m.week.match) }}</p><p class="hint">{{ m.week.visits }} visits</p></div>
+    <div class="p-3"><p class="eyebrow">Open</p><p class="display-num text-2xl {{ 'text-danger' if m.overdue }}">{{ m.open }}</p><p class="hint {{ 'font-semibold text-danger' if m.overdue }}">{{ m.overdue }} overdue</p></div>
+  </div>
+  <div class="px-4 py-3">
+    <p class="eyebrow mb-1">Latest activity</p>
+    {% for a in m.activity %}<p class="flex gap-2 py-0.5 text-sm"><span class="w-16 shrink-0 text-muted-foreground">{{ a.ago }}</span><span class="min-w-0 truncate"><span class="font-semibold">{{ a.label }}</span>{% if a.detail %} · {{ a.detail }}{% endif %}</span></p>
+    {% else %}<p class="hint">No activity yet.</p>{% endfor %}
+    {% if m.tasks %}<p class="hint mt-2">{{ m.tasks }} open task{{ 's' if m.tasks > 1 }}</p>{% endif %}
+  </div>
+</article>
+{% endfor %}
+</div>
+
+<section id="invite" class="card-pad mt-8 scroll-mt-24">
+  <h2>Invite a team member</h2>
+  <p class="hint mt-1">Create a sign-up link and text or email it. They choose their own username and password, and they'll report to you. Each link works once and expires in {{ invite_days }} days.</p>
+  {% if new_link %}
+  <div class="mt-4 animate-rise rounded-2xl border border-accent/60 bg-accent/5 p-4">
+    <p class="eyebrow">Invite link{% if new_link.name %} for {{ new_link.name }}{% endif %} · {{ new_link.role }}</p>
+    <div class="mt-2 flex flex-wrap gap-2">
+      <input class="input min-w-0 flex-1 font-mono text-sm" value="{{ new_link.link }}" readonly data-copy-source aria-label="Invite link">
+      <button type="button" class="btn" data-copy>Copy</button>
+      <button type="button" class="btn btn-primary" data-share-link="{{ new_link.link }}" data-share-text="Join our field team on {{ site().company_name }}. Set up your account here:">Share</button>
+    </div>
+    <div class="mt-2 flex flex-wrap gap-3 text-sm font-semibold">
+      <a href="sms:?&amp;body={{ ('Join our field team on ' ~ site().company_name ~ ': ' ~ new_link.link)|urlencode }}">Text it</a>
+      {% set greet = 'Hi' ~ ((' ' ~ new_link.name.split(' ')[0]) if new_link.name else '') ~ ',' %}
+      <a href="mailto:?subject={{ ('Your ' ~ site().company_name ~ ' account')|urlencode }}&amp;body={{ (greet ~ '\n\nSet up your field account here. The link works once and expires in 7 days:\n' ~ new_link.link)|urlencode }}">Email it</a>
+    </div>
+    <p class="hint mt-2">This link is only shown once. Create a new one if you lose it.</p>
+  </div>
+  {% endif %}
+  <form method="post" action="/team/invites" class="mt-4 flex flex-wrap items-end gap-2">{{ csrf_field() }}
+    <label class="min-w-48 flex-1"><span class="label">Their name (optional)</span><input class="input" name="name" placeholder="e.g. Casey Morgan"></label>
+    <label><span class="label">Role</span><select class="input w-auto" name="role"><option value="rep">Rep</option><option value="viewer">Viewer (read-only)</option><option value="manager">Manager</option></select></label>
+    <button class="btn btn-primary" data-loading="Creating…">Create invite link</button>
+  </form>
+  {% if invites %}
+  <div class="table-wrap mt-4"><table class="data">
+    <thead><tr><th>For</th><th>Role</th><th>Status</th><th>Created</th><th></th></tr></thead>
+    <tbody>{% for i in invites %}<tr>
+      <td>{{ i.name_hint or '—' }}{% if i.used_by %} <span class="hint">→ {{ i.used_by.display_name }}</span>{% endif %}</td><td class="capitalize">{{ i.role }}</td>
+      <td><span class="pill {{ {'Pending':'pill-info','Used':'pill-success','Expired':'pill-muted','Revoked':'pill-muted'}[i.state] }}">{{ i.state }}</span></td>
+      <td class="whitespace-nowrap text-muted-foreground">{{ i.created_at|local }}</td>
+      <td>{% if i.state == 'Pending' %}<form method="post" action="/team/invites/{{ i.id }}/revoke" data-confirm="Revoke this invite link?">{{ csrf_field() }}<button class="btn btn-danger btn-sm">Revoke</button></form>{% endif %}</td>
+    </tr>{% endfor %}</tbody></table></div>
+  {% endif %}
+</section>
+{% endblock %}

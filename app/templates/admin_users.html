@@ -9,7 +9,8 @@
   <p class="hint">Copy it now and send it privately. It won't be shown again, and they'll choose their own password at first sign-in.</p>
 </div>
 {% endif %}
-<details class="card-pad mb-5" {% if people|length < 2 %}open{% endif %}><summary class="cursor-pointer font-semibold">+ Add a person</summary>
+<p class="mb-4 text-sm">Tip: <a href="/team#invite">send an invite link</a> and people set up their own account and report to you. Or add someone directly here.</p>
+<details class="card-pad mb-5" {% if people|length < 2 %}open{% endif %}><summary class="cursor-pointer font-semibold">+ Add a person directly</summary>
 <form method="post" action="/admin/users" class="mt-4">{{ csrf_field() }}
   <div class="form-grid">
     <label class="field"><span class="label">Full name</span><input class="input" name="display_name" required></label>
@@ -25,13 +26,15 @@
 </form></details>
 
 <div class="table-wrap"><table class="data">
-  <thead><tr><th>Person</th><th>Role</th><th>Active</th><th>Last sign-in</th><th></th></tr></thead>
+  <thead><tr><th>Person</th><th>Role</th><th>Reports to</th><th>Active</th><th>Last sign-in</th><th></th></tr></thead>
   <tbody>{% for u in people %}
   <tr class="{{ 'opacity-60' if not u.active }}">
     <td><div class="flex items-center gap-3"><span class="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-xs font-bold">{{ u.initials }}</span>
       <div><input form="u{{ u.id }}" class="input min-h-9 py-1 text-sm font-semibold" name="display_name" value="{{ u.display_name }}" aria-label="Name">
       <p class="hint mt-1"><code>{{ u.username }}</code>{% if u.must_change_password %} {{ badge('Temp password') }}{% endif %}{% if u.locked_until and u.locked_until > now %} <span class="pill pill-danger">Locked</span>{% endif %}</p></div></div></td>
     <td><select form="u{{ u.id }}" class="input min-h-9 w-auto py-1 text-sm" name="role" aria-label="Role">{% for r in roles %}<option {% if u.role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></td>
+    <td><select form="u{{ u.id }}" class="input min-h-9 w-auto py-1 text-sm" name="manager_id" aria-label="Reports to"><option value="">—</option>
+      {% for mgr in managers if mgr.id != u.id %}<option value="{{ mgr.id }}" {% if u.manager_id == mgr.id %}selected{% endif %}>{{ mgr.display_name }}</option>{% endfor %}</select></td>
     <td><select form="u{{ u.id }}" class="input min-h-9 w-auto py-1 text-sm" name="active" aria-label="Active"><option value="Y">Yes</option><option value="N" {% if not u.active %}selected{% endif %}>No</option></select></td>
     <td class="whitespace-nowrap text-muted-foreground">{{ u.last_login|local or 'Never' }}</td>
     <td><div class="flex flex-wrap gap-1.5">

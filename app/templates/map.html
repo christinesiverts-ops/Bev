@@ -1,0 +1,63 @@
+{% extends "base.html" %}{% block title %}Map &amp; routes{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css"><script src="/static/vendor/leaflet/leaflet.js" defer></script><script src="/static/map.js" defer></script>{% endblock %}
+{% block main %}w-full pb-24 lg:pb-0{% endblock %}
+{% block content %}
+<script type="application/json" id="map-config">{{ {'tiles': tiles, 'mode': 'plan'}|tojson }}</script>
+<div class="grid lg:h-[calc(100vh)] lg:grid-cols-[24rem_1fr]">
+  <aside class="order-2 flex min-h-0 flex-col border-r border-border bg-card lg:order-1">
+    <div class="border-b border-border p-4">
+      <div class="flex items-center justify-between gap-2">
+        <h1 class="font-display text-2xl font-semibold">Map &amp; routes</h1>
+        <a class="btn btn-sm" href="/routes">{{ icon('list', 'size-4') }}Routes</a>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Show">
+        <button type="button" class="btn btn-sm" data-filter="all" aria-pressed="true">All</button>
+        <button type="button" class="btn btn-sm" data-filter="attention" aria-pressed="false"><span class="size-2.5 rounded-full bg-warning"></span>Needs a visit</button>
+        <button type="button" class="btn btn-sm" data-filter="urgent" aria-pressed="false"><span class="size-2.5 rounded-full bg-danger"></span>Overdue</button>
+      </div>
+      <div class="mt-2 flex gap-2">
+        <select class="input min-h-10 flex-1 text-sm" data-chain aria-label="Chain"><option value="">All chains</option>{% for c in chains %}<option>{{ c }}</option>{% endfor %}</select>
+        <input class="input min-h-10 flex-1 text-sm" data-search placeholder="Search" aria-label="Search stores">
+      </div>
+      {% if n_missing %}
+      <div class="mt-3 rounded-xl bg-warning/10 p-3 text-[13px]">
+        <p><strong>{{ n_missing }} of {{ n_stores }} stores</strong> aren't on the map yet. They're placed automatically at a rep's first check-in{% if user.is_manager and n_geocodable %}, or look them up by address now{% endif %}.</p>
+        {% if user.is_manager and n_geocodable %}
+        {% if geo.running %}<p class="mt-2 font-semibold">Looking up addresses… {{ geo.done }}/{{ geo.total }} ({{ geo.found }} found)</p>
+        {% else %}<form method="post" action="/map/geocode" class="mt-2">{{ csrf_field() }}<button class="btn btn-sm" data-loading="Starting…">Look up {{ n_geocodable }} addresses</button></form>{% endif %}
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    <div class="min-h-0 flex-1 overflow-y-auto" data-store-list aria-live="polite">
+      <p class="hint p-4">Loading stores…</p>
+    </div>
+    {% if user.can_log_visits %}
+    <form method="post" action="/routes" class="border-t border-border bg-raised p-4" data-plan-form data-self="{{ user.id }}">{{ csrf_field() }}
+      <input type="hidden" name="start_lat"><input type="hidden" name="start_lng">
+      <div class="mb-3 flex items-center justify-between gap-2">
+        <p class="text-sm"><span class="display-num text-2xl" data-selected-count>0</span> stops selected</p>
+        <div class="flex gap-1"><button type="button" class="btn btn-ghost btn-sm" data-select-attention>Select all due</button><button type="button" class="btn btn-ghost btn-sm" data-clear>Clear</button></div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <label><span class="sr-only">Route date</span><input class="input min-h-10 text-sm" type="date" name="route_date" value="{{ t.isoformat() }}"></label>
+        {% if user.is_manager %}
+        <label><span class="sr-only">Assign to</span><select class="input min-h-10 text-sm" name="assignee_id">{% for u in team %}<option value="{{ u.id }}" {% if u.id == user.id %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
+        {% else %}<input type="hidden" name="assignee_id" value="{{ user.id }}">{% endif %}
+      </div>
+      <label class="mt-2 flex items-center gap-2 text-sm font-medium"><input type="checkbox" class="size-4" data-from-here checked> Start from my current location <span class="hint">(uncheck when planning for someone else)</span></label>
+      <div data-selected-inputs></div>
+      <button class="btn btn-primary btn-block mt-3" data-plan-btn disabled data-loading="Planning…">{{ icon('pin') }}Plan fastest route</button>
+    </form>
+    {% endif %}
+  </aside>
+  <div class="relative order-1 h-[55vh] lg:order-2 lg:h-auto">
+    <div id="map" class="absolute inset-0 z-0 bg-muted" role="application" aria-label="Store map"></div>
+    <div class="pointer-events-none absolute bottom-4 left-4 z-[400] flex gap-3 rounded-xl bg-card/95 px-3 py-2 text-xs font-semibold shadow-card">
+      <span class="flex items-center gap-1.5"><span class="size-3 rounded-full bg-danger"></span>Overdue</span>
+      <span class="flex items-center gap-1.5"><span class="size-3 rounded-full bg-warning"></span>Needs a visit</span>
+      <span class="flex items-center gap-1.5"><span class="size-3 rounded-full bg-success"></span>Up to date</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

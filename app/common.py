@@ -69,12 +69,12 @@ def s(v) -> str:
     return (v or "").strip() if isinstance(v, str) or v is None else str(v).strip()
 
 
-def opt_float(v) -> float | None:
+def opt_float(v, digits: int = 2) -> float | None:
     v = s(v).replace("$", "").replace(",", "")
     if not v:
         return None
     try:
-        return round(float(v), 2)
+        return round(float(v), digits)
     except ValueError:
         raise ValueError(f"'{v}' is not a number")
 
@@ -104,3 +104,8 @@ def opt_date(v) -> date | None:
 def yn(v) -> bool | None:
     v = s(v).upper()
     return True if v in ("Y", "YES", "TRUE", "1") else False if v in ("N", "NO", "FALSE", "0") else None
+
+
+def opt_coord(v) -> float | None:
+    """Latitude/longitude: keep GPS precision (6 dp ~ 0.1 m)."""
+    return opt_float(v, 6)

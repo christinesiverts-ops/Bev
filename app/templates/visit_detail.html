@@ -2,7 +2,8 @@
 {% block main %}page !pb-48{% endblock %}
 {% block content %}
 {# ---------- header ---------- #}
-<a href="/stores/{{ v.store.id }}" class="mb-3 inline-flex items-center gap-1 text-sm font-semibold">{{ icon('back', 'size-4') }}Store page</a>
+<div class="mb-3 flex items-center justify-between gap-2"><a href="/stores/{{ v.store.id }}" class="inline-flex items-center gap-1 text-sm font-semibold">{{ icon('back', 'size-4') }}Store page</a>
+  <a class="btn btn-sm" href="/visits/{{ v.id }}/recap">{{ icon('note', 'size-4') }}Recap</a></div>
 <section class="card mb-4 flex items-center gap-4 p-4 sm:p-5">
   {{ chain_mark(v.store.chain, 'h-14 w-24') }}
   <div class="min-w-0 flex-1">

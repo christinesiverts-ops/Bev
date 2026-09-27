@@ -15,6 +15,7 @@
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/static/icon-192.png">
 <script src="/static/app.js" defer></script>
+{% block head %}{% endblock %}
 </head>
 <body class="min-h-screen">
 {% macro navlink(href, label, ic, exact=False) -%}
@@ -37,11 +38,13 @@
     </a>
     <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto" aria-label="Main">
       {{ navlink('/', 'Home', 'home', True) }}
-      {% if user.can_log_visits %}{{ navlink('/visits/new', 'Start visit', 'pin') }}{% endif %}
+      {% if user.can_log_visits %}{{ navlink('/visits/new', 'Check in', 'clipboard') }}{% endif %}
+      {{ navlink('/map', 'Map & routes', 'pin') }}
       {{ navlink('/stores', 'Stores', 'store') }}
       {{ navlink('/wins', 'Wins', 'trophy') }}
       {{ navlink('/issues', 'Follow-ups', 'flag') }}
       {{ navlink('/tasks', 'Tasks', 'clipboard') }}
+      {{ navlink('/recap/day', 'Day recap', 'note') }}
       {{ navlink('/visits', 'Visit log', 'list', True) }}
       <p class="eyebrow mt-5 px-3 pb-1">Plan</p>
       {{ navlink('/plan', 'Programs', 'note') }}
@@ -49,6 +52,7 @@
       {{ navlink('/dashboard', 'Dashboard', 'chart') }}
       {% if user.is_manager %}
       <p class="eyebrow mt-5 px-3 pb-1">Manage</p>
+      {{ navlink('/team', 'Team', 'users', True) }}
       {{ navlink('/data-review', 'Data review', 'alert') }}
       {{ navlink('/admin/users', 'Team & access', 'users') }}
       {{ navlink('/admin/branding', 'Branding', 'palette') }}
@@ -83,11 +87,13 @@
         <summary class="grid size-9 cursor-pointer list-none place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground" aria-label="Account menu">{{ user.initials }}</summary>
         <div class="absolute right-0 top-11 z-40 w-60 animate-rise rounded-2xl border border-border bg-card p-2 shadow-lift">
           <p class="px-3 pt-2 text-sm font-semibold">{{ user.display_name }}</p><p class="hint px-3 pb-2 capitalize">{{ user.role }}</p>
+          <a class="side-link" href="/map">{{ icon('pin') }}Map &amp; routes</a>
           <a class="side-link" href="/tasks">{{ icon('clipboard') }}Tasks</a>
           <a class="side-link" href="/visits">{{ icon('list') }}Visit log</a>
           <a class="side-link" href="/plan">{{ icon('note') }}Programs</a>
           <a class="side-link" href="/calendar">{{ icon('calendar') }}Promo calendar</a>
           {% if user.is_manager %}
+          <a class="side-link" href="/team">{{ icon('users') }}Team</a>
           <a class="side-link" href="/data-review">{{ icon('alert') }}Data review</a>
           <a class="side-link" href="/admin/users">{{ icon('users') }}Team &amp; access</a>
           <a class="side-link" href="/admin/branding">{{ icon('palette') }}Branding</a>

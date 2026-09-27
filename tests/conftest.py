@@ -29,8 +29,16 @@ def csrf(client, path="/"):
 
 
 def post(client, path, data=None, files=None, page=None, **kw):
-    data = dict(data or {})
-    data["csrf_token"] = csrf(client, page or "/")
+    token = csrf(client, page or "/")
+    if isinstance(data, list):                      # repeated fields, e.g. several store_id values
+        merged: dict = {}
+        for k, v in data:
+            merged.setdefault(k, []).append(v)
+        data = {k: (v if len(v) > 1 else v[0]) for k, v in merged.items()}
+        data["csrf_token"] = token
+    else:
+        data = dict(data or {})
+        data["csrf_token"] = token
     return client.post(path, data=data, files=files, follow_redirects=kw.get("follow", False))
 
 
@@ -45,7 +53,8 @@ def app(tmp_path, monkeypatch):
     monkeypatch.setattr("app.config.PHOTO_DIR", tmp_path / "photos")
     monkeypatch.setattr("app.config.BACKUP_DIR", tmp_path / "backups")
     for mod in ("app.common", "app.routes.visits", "app.routes.home", "app.routes.plan", "app.routes.stores",
-                "app.routes.issues", "app.routes.tasks", "app.routes.dashboard"):
+                "app.routes.issues", "app.routes.tasks", "app.routes.dashboard", "app.routes.recap", "app.routes.maps",
+                "app.routes.team", "app.routes.wins"):
         monkeypatch.setattr(f"{mod}.today", lambda: FIXED_TODAY)
     security.reset_throttle()
     application = create_app(db_url=f"sqlite:///{tmp_path / 'audit.db'}", start_background=False)

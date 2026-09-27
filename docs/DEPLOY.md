@@ -49,7 +49,11 @@ Then run `sudo nginx -t && sudo systemctl reload nginx`. If port 8000 is already
 ## 3. First sign-in and team setup
 
 1. Open `https://audit.yourcompany.com` and sign in with `ADMIN_USERNAME` / `ADMIN_PASSWORD`. Choose your own password.
-2. Go to **Users → Add a person** for each team member. Pick a role:
+2. Go to **Team → Invite a team member**, create a link for each person and text or email it to them. They set up their own login and report to you. You can also add people directly under **Team & access**.
+
+   Invite links are built from the address people use to reach the app. If that comes out wrong behind a proxy, set `PUBLIC_URL=https://your-domain` in `.env`.
+
+   **Team & access → Add a person** also works for each team member. Pick a role:
 
    | Role | Can do |
    |---|---|
@@ -63,6 +67,13 @@ Then run `sudo nginx -t && sudo systemctl reload nginx`. If port 8000 is already
 5. Work through **Data review**. As you confirm 2026 pricing, edit the programs and promo windows in the app, or re-import `Chain_Audit_Tool.xlsx` under **Data → Import plan**.
 
 Reps can add the site to their phone's home screen, where it opens like an app. On iPhone, use Share → Add to Home Screen; on Android, use ⋮ → Add to Home screen.
+
+## Maps
+
+- **Street map.** The map background comes from OpenStreetMap tiles, which each user's browser loads directly. The server doesn't need outbound access for tiles. To use a different tile provider, set `MAP_TILE_URL` and `MAP_TILE_ATTRIBUTION`.
+- **Store locations.** Stores get a map location from lat/long in a store import, or automatically from a rep's first accurate GPS check-in there.
+- **Address lookup.** Managers can also press **Look up addresses** on the map. This uses OpenStreetMap Nominatim at 1 request per second and needs outbound HTTPS from the server. Set `GEOCODER=off` to disable it.
+- **Estimates.** Route times use `STOP_MINUTES` (default 25) and `AVG_SPEED_KMH` (default 45). These are planning estimates; the Navigate button hands off to Google Maps for live traffic.
 
 ## 4. Backups
 
