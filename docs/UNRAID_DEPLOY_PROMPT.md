@@ -1,6 +1,7 @@
 You are deploying and maintaining **Chain Audit**, a self-hosted Docker web app, on an **Unraid** server that you reach over SSH. The server belongs to Roux. It runs other things too, so be careful and conservative. Do not change anything outside what's listed here without asking.
 
 ## The app
+- Public address: **https://bev.willmott.one**. Before you configure the proxy, check that DNS for this name points at Roux's server or tunnel.
 - Repo (private): `git@github.com:christinesiverts-ops/Bev.git`, branch `claude/beverage-pricing-audit-tool-slcoem`. A read-only GitHub deploy key for this repo is already set up on the server; find where Roux stored it and use it for all git operations.
 - One container, `chain-audit`, built from the repo's `Dockerfile` and started by `docker-compose.yml`. It serves plain HTTP on port **8000**, published only on `127.0.0.1:${APP_PORT:-8000}`. It has a health check at `GET /healthz`.
 - The compose file already sets `mem_limit: 512m`, `cpus: 1.0` and `pids_limit: 200`, plus a read-only root filesystem, `cap_drop: ALL` and `no-new-privileges`. **Never** add `privileged`, `network_mode: host`, a `/var/run/docker.sock` mount or `cap_add`.
@@ -56,11 +57,11 @@ Run `cp .env.example .env && chmod 600 .env`, then set:
 - `ADMIN_PASSWORD`: generate a strong one. It needs at least 10 characters, upper- and lower-case letters and a number. Also write it to `/mnt/user/appdata/chain-audit/INITIAL_ADMIN_PASSWORD.txt` with `chmod 600`, and tell Roux where it is. Do **not** show it. The user must change it at first sign-in.
 - `TZ_NAME`: ask if unknown; the team is on US Pacific time, so `America/Los_Angeles` is the default.
 - `APP_PORT`: keep 8000 unless it's taken on the host. Check with `ss -ltn`.
-- `PUBLIC_URL=https://<the domain Roux gives you>`
+- `PUBLIC_URL=https://bev.willmott.one`
 
 ### 5. Set up the reverse proxy
 Find out which proxy Roux uses and where it runs.
-- **nginx on the host:** proxy the domain to `http://127.0.0.1:8000`.
+- **nginx on the host:** proxy `bev.willmott.one` to `http://127.0.0.1:8000`.
 - **nginx in a container** (Nginx Proxy Manager, SWAG, etc.): `127.0.0.1` on the host isn't reachable from inside that container. In `docker-compose.override.yml`, attach `app` to the proxy's existing Docker network (declare it `external: true`) and proxy to `http://chain-audit:8000`. Keep the loopback-only port mapping.
 
 The proxy must:
@@ -75,7 +76,7 @@ Run `./scripts/deploy.sh`. It should end with `Deployed <commit>: healthy`.
 
 ### 7. Verify
 - `curl -s http://127.0.0.1:<APP_PORT>/healthz` returns `{"ok":true}`.
-- `curl -sI https://<domain>/login` returns 200, and the response includes `content-security-policy`.
+- `curl -sI https://bev.willmott.one/login` returns 200, and the response includes `content-security-policy`.
 - Signing in over HTTPS works. Check that the `audit_session` cookie is set with `Secure`; you can confirm this with curl using the login form's CSRF token, without printing the password.
 - Memory use is well under 512 MB: `docker stats --no-stream chain-audit`.
 - Backups land in `/mnt/user/appdata/chain-audit-data/backups`: `docker exec chain-audit python -m app.backup`.
